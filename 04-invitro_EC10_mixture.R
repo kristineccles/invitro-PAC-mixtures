@@ -4,31 +4,13 @@
 # Date: September 22nd, 2022
 # Updated: April 27th, 2023
 
-# Notes: need to run mixtures_modeling.R AND mixtures_dr.R
+# Notes: need to run 01-individual_chemical_dr.R and 02-mixtures-modeling.R
 # Order to run - 4
 #################################################
-
-# load libraries
-library(drc)
-library(dplyr)
-library(readr)
-library(purrr)
-library(ggplot2)
-library(sjPlot)
-library(cowplot)
-library(data.table)
-library(reshape2)
-library(ggpubr)
-library(broom)
-library(tidyr)
-library(viridis)
-library(truncnorm)
 
 #### Independent Action ####
 # Calculate the array of predicted Y values for fixed X values
 # For each x value, predicted y of mixture = 1 - PRODUCT(1 - predictedY(weightFactor*x))
-#y = d/(1 + exp(b *(log(x) - e)))
-#predY <- 1-prod(1/(1+exp(b*(log(x*fract)- log(e)))))
 
 IA_invitro100_CI <- 
   lapply(1:length(bootmat_list), FUN =  function(j) {
@@ -36,14 +18,19 @@ IA_invitro100_CI <-
       1-prod((1/(1+ (exp(-bootmat_list[[j]]$slope * (log(x*bootmat_list[[j]]$Invitro10_percent) - (bootmat_list[[j]]$ED50)))))))
     })})
 
-unlist_invitro100_CI <- cbind(x,  melt(IA_invitro100_CI))
-colnames(unlist_invitro100_CI) <- c("x", "y_pred", "itteration")
+unlist_IA_invitro_CI <- cbind(x,  melt(IA_invitro100_CI))
+colnames(unlist_IA_invitro_CI) <- c("x", "y", "iteration")
+unlist_IA_invitro_CI$group <- "IA"
 
-IA_CI_invitro100_final <- unlist_invitro100_CI%>%
+unlist_IA_invitro_CI <- unlist_IA_invitro_CI%>%
+  mutate(across(c(y), ~ scales::rescale(., to = c(0, invitro_top))))
+summary(unlist_IA_invitro_CI)
+
+IA_CI_invitro100_final <- unlist_IA_invitro_CI%>%
   group_by(x)%>%
-  summarise(mean = median(y_pred),
-            lower = quantile(y_pred,0.025, na.rm =TRUE),
-            upper = quantile(y_pred, 0.975, na.rm =TRUE))%>%
+  summarise(mean = median(y),
+            lower = quantile(y,0.025, na.rm =TRUE),
+            upper = quantile(y, 0.975, na.rm =TRUE))%>%
   as.data.frame()
 
 IA_CI_invitro100_final$mix_ratio <- "Invitro100"
@@ -52,11 +39,6 @@ IA_CI_invitro100_final
 # Combined dataframes
 IA_df_invitro <- IA_CI_invitro100_final
 IA_df_invitro$Method <- "IA"
-
-#rescale
-IA_df_invitro$mean <- scales::rescale(IA_df_invitro$mean*100, to=c(0,invitro_top))
-IA_df_invitro$lower <- scales::rescale(IA_df_invitro$lower*100, to=c(0,invitro_top))
-IA_df_invitro$upper <- scales::rescale(IA_df_invitro$upper*100, to=c(0,invitro_top))
 
 #plot
 p1 <- ggplot()+
@@ -83,14 +65,19 @@ DA_ED10_invitro_CI <-
       sum(bootmat_list[[j]]$Invitro10_percent*(bootmat_list[[j]]$ED50 * exp((bootmat_list[[j]]$slope )*log((1-y)/y))))
     })})
 
-unlist_DA_ED10_invitro_CI <- cbind(y,  melt(DA_ED10_invitro_CI))
-colnames(unlist_DA_ED10_invitro_CI) <- c("y", "x_pred", "itteration")
+unlist_DA_ED10_invitro_CI <- cbind(y,  melt(DA_ED10_invitro_CI))%>%
+  mutate(across(c(y), ~ scales::rescale(., to = c(0, invitro_top))))
+colnames(unlist_DA_ED10_invitro_CI) <- c("y", "x", "iteration")
+unlist_DA_ED10_invitro_CI$group <- "CA"
+
+ggplot(unlist_DA_ED10_invitro_CI, aes(y=y, x=log10(x)))+
+  geom_point()
 
 DA_CI_ED10_invitro_final <- unlist_DA_ED10_invitro_CI%>%
   group_by(y)%>%
-  summarise(mean = median(x_pred),
-            lower = quantile(x_pred,0.025, na.rm =TRUE),
-            upper = quantile(x_pred, 0.975, na.rm =TRUE))%>%
+  summarise(mean = median(x),
+            lower = quantile(x,0.025, na.rm =TRUE),
+            upper = quantile(x, 0.975, na.rm =TRUE))%>%
   as.data.frame()
 DA_CI_ED10_invitro_final$mix_ratio <- "Invitro100"
 
@@ -125,9 +112,6 @@ B1bootmat_invitro <- left_join(B1bootmat, individual_model_coeff2[,c("curve", "I
 B1bootmat_list_invitro <- split(B1bootmat_invitro, f=B1bootmat_invitro$itter)
 
 # GCA Predictions
-#Emax = (MAX1(C1/ED501) + MAX2(C2/ED502))/(1+(C1/ED501)+(C2/EC2))
-#Emix = MAX1(C1/ED501) + MAX2(C2/ED502) + MAX1(C1/ED501)/1+(C1/ED501)+(C2/ED502) +(C3/ED503)
-
 GCA_ED10_invitro_CI <- 
   lapply(1:length(B1bootmat_list_invitro), FUN =  function(j) {
     apply(x, MARGIN = 1, FUN = function(x) {
@@ -136,13 +120,17 @@ GCA_ED10_invitro_CI <-
     })})
 
 unlist_GCA_ED10_invitro_CI <- cbind(x,  melt(GCA_ED10_invitro_CI))
-colnames(unlist_GCA_ED10_invitro_CI) <- c("x", "y_pred", "itteration")
+colnames(unlist_GCA_ED10_invitro_CI) <- c("x", "y", "iteration")
+unlist_GCA_ED10_invitro_CI$group <- "GCA"
+
+ggplot(unlist_GCA_ED10_invitro_CI, aes(y=y, x=log10(x)))+
+  geom_point()
 
 GCA_CI_ED10_invitro_final <- unlist_GCA_ED10_invitro_CI%>%
   group_by(x)%>%
-  summarise(mean = median(y_pred),
-            lower = quantile(y_pred,0.025, na.rm =TRUE),
-            upper = quantile(y_pred, 0.975, na.rm =TRUE))%>%
+  summarise(mean = median(y),
+            lower = quantile(y,0.025, na.rm =TRUE),
+            upper = quantile(y, 0.975, na.rm =TRUE))%>%
   as.data.frame()
 GCA_CI_ED10_invitro_final$mix_ratio <- "Invitro100"
 
@@ -199,27 +187,10 @@ mix_UpperLimit_SE <- as.data.frame(subset(mix_model_CI, term == "Upper Limit")$s
 colnames(mix_UpperLimit_SE) <- "SE_UpperLimit"
 mix_model_coeff_wCI <- cbind(mix_model_coeff, mix_slope_SE, mix_ED50_SE, mix_UpperLimit_SE)
 
-
-ED10_Invitro<- drm(MaxResp~Active_Dose_uM, data=invitro_mix,
-                   type = "continuous",
-                   lowerl = c(-Inf,NA, 0),
-                   upperl = c(0, 100, Inf),
-                   fct=LL.4(fixed=c(NA, FIXED_C , NA, NA), 
-                            names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
-
-predict_ED10_Invitro <- as.data.frame(cbind(x, mixture ="ED10_Invitro", (predict(ED10_Invitro, newdata = x,
-                                                                                 interval = "confidence", level = 0.95))))
-
-invitro_predict_df <- predict_ED10_Invitro
+invitro_predict_df <- as.data.frame(cbind(x, mixture ="Invitro", (predict(mix_model, newdata = x,
+                                                                                 interval = "confidence", level = 0.975))))
 
 invitro_predict_df[ invitro_predict_df<0 ] <- 0
-
-summary_predict <- invitro_predict_df%>%
-  group_by(mixture)%>%
-  summarise(max_pred = max(Prediction),
-            max_lower = max(Lower),
-            max_upper = max(Upper))
-summary_predict
 
 #Plot
 measured_mix_plot <- ggplot()+
@@ -232,15 +203,10 @@ measured_mix_plot <- ggplot()+
 measured_mix_plot
 
 #----------------------------------------------------------------------
-#---------- PART 4: Compare Predicted vs Measured ---------
+#---------- PART 4: Plot to Compare Predicted vs Measured ---------
 #---------------------------------------------------------------------- 
 
-#plot together
-MIN_LOG_DOSE <- (-5)  # How to show zero dose values on log scale
-MAX_LOG_DOSE <- 3  # Just for scaling
-
-# Plots
-
+#### Compare CR ####
 compare_ED10_100 <- ggplot()+
   
   geom_line(data = subset(DA_df_invitro, mix_ratio == "Invitro100"), aes(x= log10(mean), y = y, color = "CA"), linewidth = 1)+
@@ -264,6 +230,7 @@ compare_ED10_100 <- ggplot()+
   theme(legend.position="bottom")
 compare_ED10_100
 
+#### Compare Pie plot ####
 invitro_pie<- ggplot(individual_model_coeff2, aes(x="", y=Invitro10_percent, fill=curve))+
   geom_bar(stat = "identity")+
   # Make it circular
@@ -282,76 +249,198 @@ invitro_pie<- ggplot(individual_model_coeff2, aes(x="", y=Invitro10_percent, fil
   labs(fill = "Chemical")
 invitro_pie
 
-#### Make point and SE plot ####
-# tops are calculated in 02
+#### SE and Point Comparison ####
+# Set up 
 
-unlist_invitro100_CI$y <- scales::rescale(unlist_invitro100_CI$y_pred*100, to=c(0,invitro_top))
-dr_IA_invitro <- drm(y ~ x, data = unlist_invitro100_CI, 
-             type = "continuous",
-             lowerl = c(-Inf, 0, 0),
-             upperl = c(0, 100, Inf),
-             fct = LL.4(fixed = c(NA, FIXED_C, NA, NA), 
-                        names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
-fit_IA_invitro <- tidy(dr_IA_invitro)%>%
-  as.data.frame()
-fit_IA_invitro$method <- "IA"
+# Set up Measured Data with Uniform Sampling Distribution
+sample_values <- function(dataset, num_samples = 1000) {
+  # Create an empty list to store sampled data
+  sampled_data <- list()
+  
+  # Iterate over each row of the dataset
+  for (i in 1:nrow(dataset)) {
+    x_value <- dataset$x[i]
+    lower_bound <- dataset$Lower[i]
+    upper_bound <- dataset$Upper[i]
+    
+    # Generate uniformly distributed samples within the bounds
+    samples <- runif(num_samples, min = lower_bound, max = upper_bound)
+    
+    # Truncate at 0 (in case any lower bounds are negative)
+    samples <- pmax(samples, 0)
+    
+    # Create a new data frame for the samples
+    sampled_df <- data.frame(x = rep(x_value, num_samples), y = samples, iteration = 1:num_samples)
+    
+    # Append the sampled data to the list
+    sampled_data[[i]] <- sampled_df
+  }
+  
+  # Combine all sampled data frames into one
+  result <- do.call(rbind, sampled_data)
+  return(result)
+}
+# Params for measured values to match modeled values
+measured_values <- sample_values(invitro_predict_df)
+measured_values$group <- "Measured"
 
-unlist_DA_ED10_invitro_CI$y <- scales::rescale(unlist_DA_ED10_invitro_CI$y*100, to=c(0,invitro_top))
-dr_CA_invitro <- drm(y ~ x_pred, data = unlist_DA_ED10_invitro_CI, 
-                     type = "continuous",
-                     #lowerl = c(-Inf, 0, 0),
-                     #upperl = c(0, 100, Inf),
-                     fct = LL.4(fixed = c(NA, FIXED_C, NA, NA), 
-                                names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
-fit_CA_invitro <- tidy(dr_CA_invitro)%>%
-  as.data.frame()
-fit_CA_invitro$method <- "CA"
+# Define function to run individual model analyses
+model_params <- function(data, fixed_c_value) {
+  
+  # Initialize vectors for storing results
+  iterVector <- vector(mode = "numeric")
+  groupVector <- vector(mode = "character")
+  slopeVector <- vector(mode = "numeric")
+  topVector <- vector(mode = "numeric")
+  ec50Vector <- vector(mode = "numeric")
+  
+  # Get unique iterations
+  unique_itter <- unique(data$iteration)
+  
+  # Loop through each iteration
+  for (i in unique_itter) {
+    
+    # Subset data for the current iteration
+    sub_data <- subset(data, iteration == i)
+    
+    # Apply the selected model
+    i_model <- drm(y ~ x, data = sub_data, fct = LL.4(fixed = c(NA, fixed_c_value, NA, NA),
+                                                      names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
+    
+    # Extract coefficients
+    coefficient <- i_model$coefficients
+    
+    # Store results
+    iterVector[i] <- i
+    groupVector[i] <- unique(data$group)
+    slopeVector[i] <- coefficient[1]
+    topVector[i] <- coefficient[2]
+    ec50Vector[i] <- coefficient[3]
+    
+    output_data <- data.frame(iterVector, groupVector, slopeVector, topVector, ec50Vector)
+    write.csv(output_data, paste0(unique(data$group), "_param_compare.csv"), row.names = FALSE)
+  }
+  
+  # Calculate summary statistics for the individual model
+  measured_summary <-  output_data%>%
+    summarize(group = unique(groupVector),
+      slope_mean = quantile(slopeVector * -1, 0.5),  # Adjust for negative slope in hill models
+      slope_lower = quantile(slopeVector * -1, 0.025),
+      slope_upper = quantile(slopeVector * -1, 0.975),
+      top = quantile(topVector, 0.5),
+      top_lower = quantile(topVector, 0.025),
+      top_upper = quantile(topVector, 0.975),
+      EC50 = quantile(ec50Vector, 0.5),
+      EC50_lower = quantile(ec50Vector, 0.025),
+      EC50_upper = quantile(ec50Vector, 0.975)
+    ) %>%
+    as.data.frame()
+  
+  print(measured_summary)
+}
 
-dr_GCA_invitro <- drm(y_pred ~ x, data = unlist_GCA_ED10_invitro_CI, 
-                     type = "continuous",
-                     #lowerl = c(-Inf, 0, 0),
-                     #upperl = c(0, 100, Inf),
-                     fct = LL.4(fixed = c(NA, FIXED_C, NA, NA), 
-                                names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
-fit_GCA_invitro <- tidy(dr_GCA_invitro)%>%
-  as.data.frame()
-fit_GCA_invitro$method <- "GCA"
+# Example call with data dataset and specific FIXED_C constant
+# Assuming data is defined and FIXED_C is a constant
+IA_invitro <- model_params(unlist_IA_invitro_CI, FIXED_C)
+DA_invitro <- model_params(unlist_DA_ED10_invitro_CI, FIXED_C)
+GCA_invitro <- model_params(unlist_GCA_ED10_invitro_CI, FIXED_C)
+Measured_invitro <- model_params(measured_values, FIXED_C)
 
-fit_measured_invitro <- tidy(ED10_Invitro)%>%
-  as.data.frame()
-fit_measured_invitro$method <- "Measured"
+# difference of means to determine statistical differences
 
-#combine
-fit_compiled_invitro <- rbind(fit_GCA_invitro, fit_CA_invitro, fit_IA_invitro, fit_measured_invitro)
-# make slope positive
+file_paths2 <- list.files(pattern = "*_param_compare.csv", full.names = TRUE)
+data_list2 <- map(file_paths2, read.csv)
+data_unlist2 <- na.omit(as.data.frame(bind_rows(data_list2)))
 
-fit_compiled_invitro$estimate[fit_compiled_invitro$term == "Slope"] <- 
-  abs(fit_compiled_invitro$estimate[fit_compiled_invitro$term == "Slope"])
+bp_slope <- ggplot(data = data_unlist2, aes(y=slopeVector*-1, x=groupVector))+
+  geom_boxplot()+
+  theme_bw()
+bp_slope
 
-fit_compiled_invitro$lower <- fit_compiled_invitro$estimate-fit_compiled_invitro$std.error*1.96
-fit_compiled_invitro$upper <- fit_compiled_invitro$estimate+fit_compiled_invitro$std.error*1.96
+bp_top <- ggplot(data = data_unlist2, aes(y=topVector, x=groupVector))+
+  geom_boxplot()+
+  theme_bw()
+bp_top
 
-plot_all_invitro<- ggplot(data = fit_compiled_invitro, aes(x = (estimate), y = method, colour = method))+
-  geom_errorbar(data = fit_compiled_invitro, aes(xmin=lower, xmax=upper), 
-                width=.2,position=position_dodge(.9))+
-  geom_point()+
-  facet_grid(.~term, scales = "free")+
+bp_ec50<- ggplot(data = data_unlist2, aes(y=ec50Vector, x=groupVector))+
+  geom_boxplot()+
+  theme_bw()
+bp_ec50
+
+library(stats)
+library(DescTools)
+slope_anova <- aov(lm(data = data_unlist2, slopeVector~ groupVector))
+summary(slope_anova)
+plot(TukeyHSD(slope_anova))
+
+top_anova <- aov(lm(data = data_unlist2, topVector~ groupVector))
+summary(top_anova)
+plot(TukeyHSD(top_anova))
+
+ec50_anova <- aov(lm(data = data_unlist2, ec50Vector~ groupVector))
+summary(ec50_anova)
+plot(TukeyHSD(ec50_anova))
+a$Measured
+
+# Plot
+invitro_combined <- rbind(IA_invitro,DA_invitro, GCA_invitro, Measured_invitro)
+
+invitro_slope<- ggplot()+
+  geom_point(data = invitro_combined, aes(x = slope_mean, y = group, color = group), size = 2)+
+  geom_errorbar(data = invitro_combined, aes(x = slope_mean, y = group, xmin=slope_lower, xmax=slope_upper, color = group), 
+                width=.1, size = 1, position=position_dodge(.9))+
   theme_bw()+
   scale_color_manual(name = "Group",
-                     values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
-                     labels = c("CA Predict", "GCA Predict", "IA Predict", "Measured"))+
-  ylab(" ")
-plot_all_invitro
+                     values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+  labs( y = "Method", x = "Slope")
+invitro_slope
 
-combined_plot <- ggarrange(compare_ED10_100, plot_all_invitro, invitro_pie,
+invitro_top<- ggplot()+
+  geom_point(data = invitro_combined, aes(x = top, y = group, color = group), size = 2)+
+  geom_errorbar(data = invitro_combined, aes(x = top, y = group, xmin=top_lower, xmax=top_upper, color = group), 
+                width=.1, size = 1, position=position_dodge(.9))+
+  theme_bw()+
+  scale_color_manual(name = "Group",
+                     values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+  labs( y = "Method", x = "Top of the Curve (%)")
+invitro_top
+
+invitro_EC50<- ggplot()+
+  geom_point(data = invitro_combined, aes(x = log10(EC50), y = group, color = group), size = 2)+
+  geom_errorbar(data = invitro_combined, aes(x = log10(EC50), y = group, xmin=log10(EC50_lower), xmax=log10(EC50_upper), color = group), 
+                width=.1, size = 1, position=position_dodge(.9))+
+  theme_bw()+
+  scale_color_manual(name = "Group",
+                     values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+  labs( y = "Method", x = "Log 10 EC50 (uM)")
+invitro_EC50
+
+invitro_com_plot <- ggarrange(invitro_EC50, invitro_slope, invitro_top,
                            ncol = 3,
                            vjust =1,
-                           labels = "AUTO",
-                           widths = c(1, 1.5, 0.75),
+                           labels = c("C", "D", "E"),
                            common.legend = TRUE,
                            legend = "bottom")
-combined_plot
+invitro_com_plot
 
-ggsave("invitro_combined_plot.jpg", combined_plot,  height =4, width =12)
+ggsave("invitro_parameters_plot.jpg", invitro_com_plot,  height =4, width =12)
+
+####################################################################
+invitro_comb1 <- ggarrange(compare_ED10_100, invitro_pie,
+                              ncol = 2,
+                              vjust =1,
+                              labels = c("A", "B"),
+                              common.legend = FALSE,
+                              legend = "bottom")
+
+invitro_final_plot <- ggarrange(invitro_comb1, invitro_com_plot, 
+                              ncol = 1,
+                              vjust =1,
+                              labels = NULL,
+                              common.legend = TRUE,
+                              legend = "bottom")
+invitro_final_plot
+
+ggsave("invitro_parameters_plot.jpg", invitro_com_plot,  height =4, width =12)
 
 

@@ -4,24 +4,12 @@
 # Date: September 22nd, 2022
 # Updated: April 17th, 2024
 # Note: Order to run -2
-# Must run individual_chemical_dr.R first
+# Must run 01-individual_chemical_dr.R first
+# must have created folder in project called "mix_pred_boot"
 #################################################
 
 # load libraries
-library(drc)
-library(tidyr)
-library(readr)
-library(purrr)
-library(ggplot2)
-library(sjPlot)
-library(cowplot)
-library(data.table)
-library(reshape2)
-library(ggpubr)
-library(broom)
-library(viridis)
 library(MCMCglmm)
-library(dplyr)
 
 # Set Up
 NUM_PTS <- 1000
@@ -34,14 +22,14 @@ y <- as.data.frame(MAX_Y * 1:1000 / 1000)
 colnames(y) <-"y"
 
 #set up parameters for CI generation
-MCiter <- 10000
+MCiter <- 1000
 
 #set seed for reproducibility
 set.seed(8789)
 
 
 #----------------------------------------------------------------------
-#---------- Refit Curve for DA and IA  ---------
+#---------- Refit Curve for CA and IA  ---------
 #----------------------------------------------------------------------
 #need to have the same top and bottom
 #only fit for reduced list 
@@ -190,7 +178,7 @@ B1ED50_boot_melt <- melt(B1ED50_boot)
 
 B1bootmat <- as.data.frame(cbind(ED50_boot_melt[,1], B1Top_boot_melt))
 colnames(B1bootmat) <- cbind("ED50","Top", "chemical")
-#add itteration number for each chemical
+#add iteration number for each chemical
 B1bootmat$itter <- 1:MCiter
 
 #add mixing ratios
@@ -214,7 +202,7 @@ IA_EM_CI <-
     })})
 
 unlist_IA_EM_CI <- cbind(x,  melt(IA_EM_CI))
-colnames(unlist_IA_EM_CI) <- c("x", "y", "itteration")
+colnames(unlist_IA_EM_CI) <- c("x", "y", "iteration")
 unlist_IA_EM_CI$group <- "unadj"
 unlist_IA_EM_CI$mix <- "EM"
 unlist_IA_EM_CI$method <- "IA"
@@ -239,7 +227,7 @@ IA_ED10_CI <-
     })})
 
 unlist_IA_ED10_CI <- cbind(x,  melt(IA_ED10_CI))
-colnames(unlist_IA_ED10_CI) <- c("x", "y", "itteration")
+colnames(unlist_IA_ED10_CI) <- c("x", "y", "iteration")
 unlist_IA_ED10_CI$group <- "unadj"
 unlist_IA_ED10_CI$mix <- "ED10"
 unlist_IA_ED10_CI$method <- "IA"
@@ -263,7 +251,7 @@ IA_ED50_CI <-
     })})
 
 unlist_IA_ED50_CI <- cbind(x,  melt(IA_ED50_CI))
-colnames(unlist_IA_ED50_CI) <- c("x", "y", "itteration")
+colnames(unlist_IA_ED50_CI) <- c("x", "y", "iteration")
 unlist_IA_ED50_CI$group <- "unadj"
 unlist_IA_ED50_CI$mix <- "ED50"
 unlist_IA_ED50_CI$method <- "IA"
@@ -315,7 +303,7 @@ DA_EM_CI <-
 unlist_DA_EM_CI <- cbind(y,  melt(DA_EM_CI))%>%
   mutate(across(c(y), ~ scales::rescale(., to = c(0, EM_top))))
   
-colnames(unlist_DA_EM_CI) <- c("y", "x", "itteration")
+colnames(unlist_DA_EM_CI) <- c("y", "x", "iteration")
 unlist_DA_EM_CI$group <- "unadj"
 unlist_DA_EM_CI$mix <- "EM"
 unlist_DA_EM_CI$method <- "DA"
@@ -338,7 +326,8 @@ DA_ED10_CI <-
 
 unlist_DA_ED10_CI <- cbind(y,  melt(DA_ED10_CI))%>%
   mutate(across(c(y), ~ scales::rescale(., to = c(0, ED10_top))))
-colnames(unlist_DA_ED10_CI) <- c("y", "x", "itteration")
+
+colnames(unlist_DA_ED10_CI) <- c("y", "x", "iteration")
 unlist_DA_ED10_CI$group <- "unadj"
 unlist_DA_ED10_CI$mix <- "ED10"
 unlist_DA_ED10_CI$method <- "DA"
@@ -361,7 +350,8 @@ DA_ED50_CI <-
 
 unlist_DA_ED50_CI <- cbind(y,  melt(DA_ED50_CI))%>%
   mutate(across(c(y), ~ scales::rescale(., to = c(0, ED50_top))))
-colnames(unlist_DA_ED50_CI) <- c("y", "x", "itteration")
+
+colnames(unlist_DA_ED50_CI) <- c("y", "x", "iteration")
 unlist_DA_ED50_CI$group <- "unadj"
 unlist_DA_ED50_CI$mix <- "ED50"
 unlist_DA_ED50_CI$method <- "DA"
@@ -412,7 +402,7 @@ GCA_EM_CI <-
     })})
 
 unlist_GCA_EM_CI <- cbind(x,  melt(GCA_EM_CI))
-colnames(unlist_GCA_EM_CI) <- c("x", "y", "itteration")
+colnames(unlist_GCA_EM_CI) <- c("x", "y", "iteration")
 unlist_GCA_EM_CI$group <- "unadj"
 unlist_GCA_EM_CI$mix <- "EM"
 unlist_GCA_EM_CI$method <- "GCA"
@@ -434,7 +424,7 @@ GCA_ED10_CI <-
     })})
 
 unlist_GCA_ED10_CI <- cbind(x,  melt(GCA_ED10_CI))
-colnames(unlist_GCA_ED10_CI) <- c("x", "y", "itteration")
+colnames(unlist_GCA_ED10_CI) <- c("x", "y", "iteration")
 unlist_GCA_ED10_CI$group <- "unadj"
 unlist_GCA_ED10_CI$mix <- "ED10"
 unlist_GCA_ED10_CI$method <- "GCA"
@@ -456,7 +446,7 @@ GCA_ED50_CI <-
     })})
 
 unlist_GCA_ED50_CI <- cbind(x,  melt(GCA_ED50_CI))
-colnames(unlist_GCA_ED50_CI) <- c("x", "y", "itteration")
+colnames(unlist_GCA_ED50_CI) <- c("x", "y", "iteration")
 unlist_GCA_ED50_CI$group <- "unadj"
 unlist_GCA_ED50_CI$mix <- "ED50"
 unlist_GCA_ED50_CI$method <- "GCA"
@@ -504,7 +494,7 @@ IA_EM_CI_100 <-
     })})
 
 unlist_EM_CI_100 <- cbind(x,  melt(IA_EM_CI_100))
-colnames(unlist_EM_CI_100) <- c("x", "y", "itteration")
+colnames(unlist_EM_CI_100) <- c("x", "y", "iteration")
 unlist_EM_CI_100$group <- "adj"
 unlist_EM_CI_100$mix <- "EM"
 unlist_EM_CI_100$method <- "IA"
@@ -526,7 +516,7 @@ IA_ED10_CI_100 <-
     })})
 
 unlist_ED10_CI_100 <- cbind(x,  melt(IA_ED10_CI_100))
-colnames(unlist_ED10_CI_100) <- c("x", "y", "itteration")
+colnames(unlist_ED10_CI_100) <- c("x", "y", "iteration")
 unlist_ED10_CI_100$group <- "adj"
 unlist_ED10_CI_100$mix <- "ED10"
 unlist_ED10_CI_100$method <- "IA"
@@ -548,7 +538,7 @@ IA_ED50_CI_100 <-
     })})
 
 unlist_ED50_CI_100 <- cbind(x,  melt(IA_ED50_CI_100))
-colnames(unlist_ED50_CI_100) <- c("x", "y", "itteration")
+colnames(unlist_ED50_CI_100) <- c("x", "y", "iteration")
 unlist_ED50_CI_100$group <- "adj"
 unlist_ED50_CI_100$mix <- "ED50"
 unlist_ED50_CI_100$method <- "IA"
@@ -595,7 +585,7 @@ DA_EM_CI_100 <-
     })})
 
 unlist_DA_EM_CI_100 <- cbind(y,  melt(DA_EM_CI_100))
-colnames(unlist_DA_EM_CI_100) <- c("y", "x", "itteration")
+colnames(unlist_DA_EM_CI_100) <- c("y", "x", "iteration")
 unlist_DA_EM_CI_100$group <- "adj"
 unlist_DA_EM_CI_100$mix <- "EM"
 unlist_DA_EM_CI_100$method <- "DA"
@@ -617,7 +607,7 @@ DA_ED10_CI_100 <-
     })})
 
 unlist_DA_ED10_CI_100 <- cbind(y,  melt(DA_ED10_CI_100))
-colnames(unlist_DA_ED10_CI_100) <- c("y", "x", "itteration")
+colnames(unlist_DA_ED10_CI_100) <- c("y", "x", "iteration")
 unlist_DA_ED10_CI_100$group <- "adj"
 unlist_DA_ED10_CI_100$mix <- "ED10"
 unlist_DA_ED10_CI_100$method <- "DA"
@@ -639,7 +629,7 @@ DA_ED50_CI_100 <-
     })})
 
 unlist_DA_ED50_CI_100 <- cbind(y,  melt(DA_ED50_CI_100))
-colnames(unlist_DA_ED50_CI_100) <- c("y", "x", "itteration")
+colnames(unlist_DA_ED50_CI_100) <- c("y", "x", "iteration")
 unlist_DA_ED50_CI_100$group <- "adj"
 unlist_DA_ED50_CI_100$mix <- "ED50"
 unlist_DA_ED50_CI_100$method <- "DA"
@@ -687,7 +677,7 @@ GCA_EM_CI_100 <-
     })})
 
 unlist_GCA_EM_CI_100 <- cbind(x,  melt(GCA_EM_CI_100))
-colnames(unlist_GCA_EM_CI_100) <- c("x", "y", "itteration")
+colnames(unlist_GCA_EM_CI_100) <- c("x", "y", "iteration")
 unlist_GCA_EM_CI_100$group <- "adj"
 unlist_GCA_EM_CI_100$mix <- "EM"
 unlist_GCA_EM_CI_100$method <- "GCA"
@@ -710,7 +700,7 @@ GCA_ED10_CI_100 <-
     })})
 
 unlist_GCA_ED10_CI_100 <- cbind(x,  melt(GCA_ED10_CI_100))
-colnames(unlist_GCA_ED10_CI_100) <- c("x", "y", "itteration")
+colnames(unlist_GCA_ED10_CI_100) <- c("x", "y", "iteration")
 unlist_GCA_ED10_CI_100$group <- "adj"
 unlist_GCA_ED10_CI_100$mix <- "ED10"
 unlist_GCA_ED10_CI_100$method <- "GCA"
@@ -732,7 +722,7 @@ GCA_ED50_CI_100 <-
     })})
 
 unlist_GCA_ED50_CI_100 <- cbind(x,  melt(GCA_ED50_CI_100))
-colnames(unlist_GCA_ED50_CI_100) <- c("x", "y", "itteration")
+colnames(unlist_GCA_ED50_CI_100) <- c("x", "y", "iteration")
 unlist_GCA_ED50_CI_100$group <- "adj"
 unlist_GCA_ED50_CI_100$mix <- "ED50"
 unlist_GCA_ED50_CI_100$method <- "GCA"

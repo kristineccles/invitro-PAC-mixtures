@@ -4,23 +4,8 @@
 # Date: September 22nd, 2022
 # Updated: June 14, 2024
 # Note: Order to run - 3
+# must have created folder in project called "mixture_fit"
 #################################################
-
-# load libraries
-library(drc)
-library(dplyr)
-library(readr)
-library(purrr)
-library(ggplot2)
-library(sjPlot)
-library(cowplot)
-library(data.table)
-library(reshape2)
-library(ggpubr)
-library(broom)
-library(tidyr)
-library(viridis)
-library(truncnorm)
 
 # load the data
 mixture_df <- read.csv("mix_conc_df 5-16-2024.csv")
