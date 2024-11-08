@@ -2,7 +2,7 @@
 # Mixtures Modeling for invitro PACs
 # Written By: Kristin Eccles
 # Date: September 22nd, 2022
-# Updated: April 27th, 2023
+# Updated: November 8th, 2023
 
 # Notes: need to run 01-individual_chemical_dr.R and 02-mixtures-modeling.R
 # Order to run - 4
@@ -69,9 +69,6 @@ unlist_DA_ED10_invitro_CI <- cbind(y,  melt(DA_ED10_invitro_CI))%>%
   mutate(across(c(y), ~ scales::rescale(., to = c(0, invitro_top))))
 colnames(unlist_DA_ED10_invitro_CI) <- c("y", "x", "iteration")
 unlist_DA_ED10_invitro_CI$group <- "CA"
-
-ggplot(unlist_DA_ED10_invitro_CI, aes(y=y, x=log10(x)))+
-  geom_point()
 
 DA_CI_ED10_invitro_final <- unlist_DA_ED10_invitro_CI%>%
   group_by(y)%>%
@@ -157,7 +154,7 @@ p3
 #----------------------------------------------------------------------
 #---------- PART 3: Curve Fitting for Measured Mixtures  ---------
 #---------------------------------------------------------------------- 
-invitro_mix <- read.csv("mix_conc_df 5-16-2024.csv")
+invitro_mix <- read.csv("mix_conc_df_edit.csv")
 invitro_mix <- subset(invitro_mix, Chemicalname == "inVitro")
 invitro_mix$Active_Dose_uM <- 10^(invitro_mix$DoseActivesOnly_logM)*1e6
 
@@ -188,7 +185,7 @@ colnames(mix_UpperLimit_SE) <- "SE_UpperLimit"
 mix_model_coeff_wCI <- cbind(mix_model_coeff, mix_slope_SE, mix_ED50_SE, mix_UpperLimit_SE)
 
 invitro_predict_df <- as.data.frame(cbind(x, mixture ="Invitro", (predict(mix_model, newdata = x,
-                                                                                 interval = "confidence", level = 0.975))))
+                                                                                 interval = "confidence", level = 0.95))))
 
 invitro_predict_df[ invitro_predict_df<0 ] <- 0
 
@@ -250,39 +247,25 @@ invitro_pie<- ggplot(individual_model_coeff2, aes(x="", y=Invitro10_percent, fil
 invitro_pie
 
 #### SE and Point Comparison ####
-# Set up 
+# format the data for comparison plot
 
-# Set up Measured Data with Uniform Sampling Distribution
-sample_values <- function(dataset, num_samples = 1000) {
-  # Create an empty list to store sampled data
-  sampled_data <- list()
-  
-  # Iterate over each row of the dataset
-  for (i in 1:nrow(dataset)) {
-    x_value <- dataset$x[i]
-    lower_bound <- dataset$Lower[i]
-    upper_bound <- dataset$Upper[i]
-    
-    # Generate uniformly distributed samples within the bounds
-    samples <- runif(num_samples, min = lower_bound, max = upper_bound)
-    
-    # Truncate at 0 (in case any lower bounds are negative)
-    samples <- pmax(samples, 0)
-    
-    # Create a new data frame for the samples
-    sampled_df <- data.frame(x = rep(x_value, num_samples), y = samples, iteration = 1:num_samples)
-    
-    # Append the sampled data to the list
-    sampled_data[[i]] <- sampled_df
-  }
-  
-  # Combine all sampled data frames into one
-  result <- do.call(rbind, sampled_data)
-  return(result)
-}
-# Params for measured values to match modeled values
-measured_values <- sample_values(invitro_predict_df)
-measured_values$group <- "Measured"
+# Extract model coefficients and confidence intervals
+coef_summary <- summary(mix_model)$coef  # Extracts coefficient summary
+confint_summary <- confint(mix_model)    # Extracts confidence intervals
+
+# Extract values and combine them into a formatted data frame
+Measured_invitro <- data.frame(
+  group = "Measured",
+  slope_mean = coef_summary[1,1]*-1,
+  slope_lower = confint_summary[1, 2]*-1,
+  slope_upper = confint_summary[1, 1]*-1,
+  top = coef_summary[2, 1],
+  top_lower = confint_summary[2, 1],
+  top_upper = confint_summary[2, 2],
+  EC50 = coef_summary[3, 1],
+  EC50_lower = confint_summary[3, 1],
+  EC50_upper = confint_summary[3, 2]
+)
 
 # Define function to run individual model analyses
 model_params <- function(data, fixed_c_value) {
@@ -344,43 +327,6 @@ model_params <- function(data, fixed_c_value) {
 IA_invitro <- model_params(unlist_IA_invitro_CI, FIXED_C)
 DA_invitro <- model_params(unlist_DA_ED10_invitro_CI, FIXED_C)
 GCA_invitro <- model_params(unlist_GCA_ED10_invitro_CI, FIXED_C)
-Measured_invitro <- model_params(measured_values, FIXED_C)
-
-# difference of means to determine statistical differences
-
-file_paths2 <- list.files(pattern = "*_param_compare.csv", full.names = TRUE)
-data_list2 <- map(file_paths2, read.csv)
-data_unlist2 <- na.omit(as.data.frame(bind_rows(data_list2)))
-
-bp_slope <- ggplot(data = data_unlist2, aes(y=slopeVector*-1, x=groupVector))+
-  geom_boxplot()+
-  theme_bw()
-bp_slope
-
-bp_top <- ggplot(data = data_unlist2, aes(y=topVector, x=groupVector))+
-  geom_boxplot()+
-  theme_bw()
-bp_top
-
-bp_ec50<- ggplot(data = data_unlist2, aes(y=ec50Vector, x=groupVector))+
-  geom_boxplot()+
-  theme_bw()
-bp_ec50
-
-library(stats)
-library(DescTools)
-slope_anova <- aov(lm(data = data_unlist2, slopeVector~ groupVector))
-summary(slope_anova)
-plot(TukeyHSD(slope_anova))
-
-top_anova <- aov(lm(data = data_unlist2, topVector~ groupVector))
-summary(top_anova)
-plot(TukeyHSD(top_anova))
-
-ec50_anova <- aov(lm(data = data_unlist2, ec50Vector~ groupVector))
-summary(ec50_anova)
-plot(TukeyHSD(ec50_anova))
-a$Measured
 
 # Plot
 invitro_combined <- rbind(IA_invitro,DA_invitro, GCA_invitro, Measured_invitro)
@@ -406,8 +352,8 @@ invitro_top<- ggplot()+
 invitro_top
 
 invitro_EC50<- ggplot()+
-  geom_point(data = invitro_combined, aes(x = log10(EC50), y = group, color = group), size = 2)+
-  geom_errorbar(data = invitro_combined, aes(x = log10(EC50), y = group, xmin=log10(EC50_lower), xmax=log10(EC50_upper), color = group), 
+  geom_point(data = invitro_combined, aes(x = (EC50), y = group, color = group), size = 2)+
+  geom_errorbar(data = invitro_combined, aes(x = (EC50), y = group, xmin=(EC50_lower), xmax=(EC50_upper), color = group), 
                 width=.1, size = 1, position=position_dodge(.9))+
   theme_bw()+
   scale_color_manual(name = "Group",
@@ -441,6 +387,6 @@ invitro_final_plot <- ggarrange(invitro_comb1, invitro_com_plot,
                               legend = "bottom")
 invitro_final_plot
 
-ggsave("invitro_parameters_plot.jpg", invitro_com_plot,  height =4, width =12)
+ggsave("invitro_parameters_plot.jpg", invitro_final_plot,  height =8, width =10)
 
 
