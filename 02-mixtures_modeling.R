@@ -66,8 +66,8 @@ individual_model_coeff2 <- cbind(individual_model_coeff2,slope_SE2, ED50_SE2)
 
 # Bootstrap for CI
 coeff_final_list2 <- split(individual_model_coeff2, f = individual_model_coeff2$curve)
-slope_boot <- sapply(names(coeff_final_list2), function(x) rtruncnorm(n = MCiter, a = -Inf, b = 0, mean = coeff_final_list2[[x]]$Slope, sd = coeff_final_list2[[x]]$SE_slope/sqrt(2)))
-ED50_boot <- sapply(names(coeff_final_list2), function(x) rtruncnorm(n = MCiter, a = 0, b = Inf, mean = coeff_final_list2[[x]]$ED50, sd = coeff_final_list2[[x]]$SE_ED50/sqrt(2)))
+slope_boot <- sapply(names(coeff_final_list2), function(x) rtruncnorm(n = MCiter, a = -Inf, b = 0, mean = coeff_final_list2[[x]]$Slope, sd = coeff_final_list2[[x]]$SE_slope*sqrt(2)))
+ED50_boot <- sapply(names(coeff_final_list2), function(x) rtruncnorm(n = MCiter, a = 0, b = Inf, mean = coeff_final_list2[[x]]$ED50, sd = coeff_final_list2[[x]]$SE_ED50*sqrt(2)))
 
 # Add Mixing Ratios
 MIX_FRACTIONS <- na.omit(read.csv("mixing_fractions.csv"))
@@ -80,12 +80,12 @@ coeff_final_list2 <- split(individual_model_coeff2, f=individual_model_coeff2$cu
 n <- names(coeff_final_list2)
 
 slope_boot <- sapply(setNames(n, n), FUN = function(x) {
-  rtruncnorm(n = MCiter, a = -Inf, b = 0, mean = coeff_final_list2[[x]]$Slope, sd = coeff_final_list2[[x]]$SE_slope/sqrt(2))}, 
+  rtruncnorm(n = MCiter, a = -Inf, b = 0, mean = coeff_final_list2[[x]]$Slope, sd = coeff_final_list2[[x]]$SE_slope*sqrt(2))}, 
   simplify = FALSE,USE.NAMES = TRUE)
 slope_boot_melt <- melt(slope_boot)
 
 ED50_boot <- sapply(setNames(n, n), FUN = function(x) {
-  rtruncnorm(n = MCiter, a = 0, b = Inf, mean = coeff_final_list2[[x]]$ED50, sd = coeff_final_list2[[x]]$SE_ED50/sqrt(2))}, 
+  rtruncnorm(n = MCiter, a = 0, b = Inf, mean = coeff_final_list2[[x]]$ED50, sd = coeff_final_list2[[x]]$SE_ED50*sqrt(2))}, 
   simplify = FALSE,USE.NAMES = TRUE)
 
 ED50_boot_melt <- melt(ED50_boot)
@@ -166,12 +166,12 @@ B1coeff_final_list <- split(B1individual_model_coeff, f=B1individual_model_coeff
 n <- names(B1coeff_final_list)
 
 B1Top_boot <- sapply(setNames(n, n), FUN = function(x) {
-  rtnorm(n = MCiter, lower = 0, upper = Inf, mean = B1coeff_final_list[[x]]$`Upper Limit`, sd = B1coeff_final_list[[x]]$SE_UpperLimit/sqrt(2))}, 
+  rtnorm(n = MCiter, lower = 0, upper = Inf, mean = B1coeff_final_list[[x]]$`Upper Limit`, sd = B1coeff_final_list[[x]]$SE_UpperLimit*sqrt(2))}, 
   simplify = FALSE,USE.NAMES = TRUE)
 B1Top_boot_melt <- melt(B1Top_boot)
 
 B1ED50_boot <- sapply(setNames(n, n), FUN = function(x) {
-  rtnorm(n = MCiter, lower = 0, upper = Inf, mean =  B1coeff_final_list[[x]]$ED50, sd = B1coeff_final_list[[x]]$SE_ED50/sqrt(2))}, 
+  rtnorm(n = MCiter, lower = 0, upper = Inf, mean =  B1coeff_final_list[[x]]$ED50, sd = B1coeff_final_list[[x]]$SE_ED50*sqrt(2))}, 
   simplify = FALSE,USE.NAMES = TRUE)
 
 B1ED50_boot_melt <- melt(B1ED50_boot)
