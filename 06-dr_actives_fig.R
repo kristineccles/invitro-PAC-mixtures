@@ -86,7 +86,8 @@ individ_chems <- ggplot() +
   scale_color_viridis(discrete= TRUE)+
   scale_fill_viridis(discrete= TRUE)+
   labs(x="Log10 Dose (uM)", y="% Max MeBio Response")+
-  theme_minimal()
+  theme_minimal()+
+  theme(legend.position="right")
 individ_chems
 
 ggsave(individ_chems, file="individual_curve_dr.jpg", height = 5, width = 5)

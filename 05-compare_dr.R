@@ -54,11 +54,28 @@ measured_df$active <- factor(measured_df$active, levels = c("Active", "All"),
                        labels = c("Active Chemicals", "All Chemicals"))
 
 DA_df$category <- factor(DA_df$category, levels = c("Adjusted", "Unadjusted"), 
-                        labels = c("% Contribution Adjusted", "% Contribution Unadjusted"))
+                        labels = c("% Contribution = 100", "% Contribution ≠ 100"))
 IA_df$category <- factor(IA_df$category, levels = c("Adjusted", "Unadjusted"), 
-                        labels = c("% Contribution Adjusted", "% Contribution Unadjusted"))
+                        labels = c("% Contribution = 100", "% Contribution ≠ 100"))
 GCA_df$category <- factor(GCA_df$category, levels = c("Adjusted", "Unadjusted"), 
-                          labels = c("% Contribution Adjusted", "% Contribution Unadjusted"))
+                          labels = c("% Contribution = 100", "% Contribution ≠ 100"))
+
+# Remove unwanted box
+DA_df <- DA_df %>%
+  filter(!(category == "% Contribution ≠ 100" & active == "Active Chemicals"))
+
+IA_df <- IA_df %>%
+  filter(!(category == "% Contribution ≠ 100" & active == "Active Chemicals"))
+
+GCA_df <- GCA_df %>%
+  filter(!(category == "% Contribution ≠ 100" & active == "Active Chemicals"))
+
+measured_df2 <- measured_df
+measured_df2$category <- "% Contribution ≠ 100" 
+measured_df$category <- "% Contribution = 100" 
+measured_df <- rbind(measured_df, measured_df2)
+measured_df <- measured_df %>%
+  filter(!(category == "% Contribution ≠ 100" & active == "Active Chemicals"))
 
 #################################################################################################
 #### Plots ####
@@ -80,15 +97,16 @@ compare_EM <- ggplot()+
   geom_ribbon(data=subset(IA_df, mix_ratio == "EM"), aes(x=log10(x), y= mean, ymin=y_lower, ymax=y_upper), fill = "#2A788EFF",alpha=0.2) +
   
   theme_bw()+
-  ylim(0, 90)+
-  facet_grid(category~active)+
+  ylim(0, 100)+
+  xlim(-5, 5)+
+  facet_wrap(. ~ active+category, nrow = 3)+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture")+
   scale_color_manual(name = "Group",
                      values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured in Vitro" = "#5A5A5A"),
                      labels = c("CA Predict", "GCA Predict", "IA Predict", "Measured"))+
-  theme(legend.position="right",
-        axis.title.y=element_blank())
+  theme(legend.position="right")
 compare_EM
+
 ggsave("compare_pred_meas_EM.jpg",compare_EM,  height = 8, width = 8)
 
 # ED10
@@ -107,14 +125,14 @@ compare_ED10 <- ggplot()+
   geom_ribbon(data=subset(IA_df, mix_ratio == "ED10"), aes(x=log10(x), y=mean, ymin=y_lower, ymax=y_upper), fill = "#2A788EFF",alpha=0.2) +
   
   theme_bw()+
-  ylim(0, 90)+
-  facet_grid(category~active)+
+  ylim(0, 100)+
+  xlim(-5, 5)+
+  facet_wrap(. ~ active+category, nrow = 3)+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture")+
   scale_color_manual(name = "Group",
                      values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured in Vitro" = "#5A5A5A"),
                      labels = c("CA Predict", "GCA Predict", "IA Predict", "Measured"))+
-  theme(legend.position="right",
-        axis.title.y=element_blank())
+  theme(legend.position="right")
 compare_ED10
 ggsave("compare_pred_meas_ED10.jpg",compare_ED10,  height = 10, width = 10)
 
@@ -134,26 +152,28 @@ compare_ED50 <- ggplot()+
   geom_ribbon(data=subset(IA_df, mix_ratio == "ED50"), aes(x=log10(x), y=mean, ymin=y_lower, ymax=y_upper), fill = "#2A788EFF",alpha=0.2) +
   
   theme_bw()+
-  facet_grid(category~active)+
-  ylim(0, 90)+
+  facet_wrap(. ~ active+category, nrow = 3)+
+  ylim(0, 100)+
+  xlim(-5, 5)+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture")+
   scale_color_manual(name = "Group",
                      values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured in Vitro" = "#5A5A5A"),
                      labels = c("CA Predict", "GCA Predict", "IA Predict", "Measured"))+
-  theme(legend.position="right", axis.title.y=element_blank())
+  theme(legend.position="right")
 compare_ED50
 ggsave("compare_pred_meas_ED50.jpg",compare_ED50,  height = 8, width = 8)
 
 
 combined_plot_all <- ggarrange(compare_EM, compare_ED10, compare_ED50,
                            ncol = 3,
-                           vjust =1,
+                           vjust =3,
                            labels = "AUTO",
-                           #widths = c(1.5, 1),
                            common.legend = TRUE, 
                            legend = "bottom")
 combined_plot_all
 
 
-ggsave("compare_dr.jpg", combined_plot_all,  height =5, width =10)
+
+
+ggsave("Fig3.jpg", combined_plot_all,  height =10, width =10)
 

@@ -158,33 +158,33 @@ invitro_mix <- read.csv("mix_conc_df_edit.csv")
 invitro_mix <- subset(invitro_mix, Chemicalname == "inVitro")
 invitro_mix$Active_Dose_uM <- 10^(invitro_mix$DoseActivesOnly_logM)*1e6
 
-mix_model<- drm(MaxResp~Active_Dose_uM, data=invitro_mix,
+invitro_mix_model<- drm(MaxResp~Active_Dose_uM, data=invitro_mix,
                 type = "continuous",
                 fct=LL.4(fixed=c(NA, 0 , NA, NA), 
                          names = c("Slope", "Lower Limit", "Upper Limit", "ED50")),
                 na.action = na.omit)
-plot(mix_model)
+plot(invitro_mix_model)
 
 #get coefficients
-mix_model_CI <- tidy(mix_model, conf.int = TRUE)
+invitro_mix_model_CI <- tidy(invitro_mix_model, conf.int = TRUE)
 
 #reorganize
-mix_model_coeff <- mix_model_CI%>%
+invitro_mix_model_coeff <- invitro_mix_model_CI%>%
   dplyr::select(term, curve, estimate) %>% 
   pivot_wider(names_from = term, values_from = estimate)%>%
   as.data.frame
-mix_model_coeff
+invitro_mix_model_coeff
 
 # add SE
-mix_slope_SE <- as.data.frame(subset(mix_model_CI, term == "Slope")$std.error)
+mix_slope_SE <- as.data.frame(subset(invitro_mix_model_CI, term == "Slope")$std.error)
 colnames(mix_slope_SE) <- "SE_slope"
-mix_ED50_SE <- as.data.frame(subset(mix_model_CI, term == "ED50")$std.error)
+mix_ED50_SE <- as.data.frame(subset(invitro_mix_model_CI, term == "ED50")$std.error)
 colnames(mix_ED50_SE) <- "SE_ED50"
-mix_UpperLimit_SE <- as.data.frame(subset(mix_model_CI, term == "Upper Limit")$std.error)
+mix_UpperLimit_SE <- as.data.frame(subset(invitro_mix_model_CI, term == "Upper Limit")$std.error)
 colnames(mix_UpperLimit_SE) <- "SE_UpperLimit"
-mix_model_coeff_wCI <- cbind(mix_model_coeff, mix_slope_SE, mix_ED50_SE, mix_UpperLimit_SE)
+invitro_mix_model_coeff_wCI <- cbind(invitro_mix_model_coeff, mix_slope_SE, mix_ED50_SE, mix_UpperLimit_SE)
 
-invitro_predict_df <- as.data.frame(cbind(x, mixture ="Invitro", (predict(mix_model, newdata = x,
+invitro_predict_df <- as.data.frame(cbind(x, mixture ="Invitro", (predict(invitro_mix_model, newdata = x,
                                                                                  interval = "confidence", level = 0.95))))
 
 invitro_predict_df[ invitro_predict_df<0 ] <- 0
@@ -218,7 +218,7 @@ compare_ED10_100 <- ggplot()+
   
   geom_line(data = subset(invitro_predict_df), aes(x= log10(x), y = Prediction, color = "Measured in Vitro"), linewidth = 1)+
   geom_ribbon(data=subset(invitro_predict_df), aes(x=log10(x), y=Prediction, ymin=Lower, ymax=Upper), fill = "#5A5A5A", alpha=0.2) +
-  xlim(c(-5, 5))+
+  xlim(c(-5, 2.5))+
   theme_bw()+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture")+
   scale_color_manual(name = "Group",
@@ -250,21 +250,21 @@ invitro_pie
 # format the data for comparison plot
 
 # Extract model coefficients and confidence intervals
-coef_summary <- summary(mix_model)$coef  # Extracts coefficient summary
-confint_summary <- confint(mix_model)    # Extracts confidence intervals
+coef_summary_invitro <- summary(invitro_mix_model)$coef  # Extracts coefficient summary
+confint_summary_invitro <- confint(invitro_mix_model)    # Extracts confidence intervals
 
 # Extract values and combine them into a formatted data frame
 Measured_invitro <- data.frame(
   group = "Measured",
-  slope_mean = coef_summary[1,1]*-1,
-  slope_lower = confint_summary[1, 2]*-1,
-  slope_upper = confint_summary[1, 1]*-1,
-  top = coef_summary[2, 1],
-  top_lower = confint_summary[2, 1],
-  top_upper = confint_summary[2, 2],
-  EC50 = coef_summary[3, 1],
-  EC50_lower = confint_summary[3, 1],
-  EC50_upper = confint_summary[3, 2]
+  slope_mean = coef_summary_invitro[1,1]*-1,
+  slope_lower = confint_summary_invitro[1, 2]*-1,
+  slope_upper = confint_summary_invitro[1, 1]*-1,
+  top = coef_summary_invitro[2, 1],
+  top_lower = confint_summary_invitro[2, 1],
+  top_upper = confint_summary_invitro[2, 2],
+  EC50 = coef_summary_invitro[3, 1],
+  EC50_lower = confint_summary_invitro[3, 1],
+  EC50_upper = confint_summary_invitro[3, 2]
 )
 
 # Define function to run individual model analyses

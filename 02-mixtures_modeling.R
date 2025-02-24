@@ -2,8 +2,8 @@
 # Mixtures Modeling for invitro PACs
 # Written By: Kristin Eccles
 # Date: September 22nd, 2022
-# Updated: April 17th, 2024
-# Note: Order to run -2
+# Updated: November 8th, 2024
+# Note: Order to run - 2
 # Must run 01-individual_chemical_dr.R first
 # must have created folder in project called "mix_pred_boot"
 #################################################
@@ -302,6 +302,8 @@ DA_EM_CI <-
 
 unlist_DA_EM_CI <- cbind(y,  melt(DA_EM_CI))%>%
   mutate(across(c(y), ~ scales::rescale(., to = c(0, EM_top))))
+
+
   
 colnames(unlist_DA_EM_CI) <- c("y", "x", "iteration")
 unlist_DA_EM_CI$group <- "unadj"
@@ -498,6 +500,10 @@ colnames(unlist_EM_CI_100) <- c("x", "y", "iteration")
 unlist_EM_CI_100$group <- "adj"
 unlist_EM_CI_100$mix <- "EM"
 unlist_EM_CI_100$method <- "IA"
+
+unlist_EM_CI_100<- unlist_EM_CI_100%>%
+  mutate(across(c(y), ~ scales::rescale(., to = c(0, EM_top))))
+
 write.csv(unlist_EM_CI_100, "mix_pred_boot/unlist_EM_CI_adj.csv", row.names = FALSE)
 
 IA_CI_EM_final_100 <- unlist_EM_CI_100%>%
@@ -520,6 +526,10 @@ colnames(unlist_ED10_CI_100) <- c("x", "y", "iteration")
 unlist_ED10_CI_100$group <- "adj"
 unlist_ED10_CI_100$mix <- "ED10"
 unlist_ED10_CI_100$method <- "IA"
+
+unlist_ED10_CI_100<- unlist_ED10_CI_100%>%
+  mutate(across(c(y), ~ scales::rescale(., to = c(0, ED10_top))))
+
 write.csv(unlist_ED10_CI_100, "mix_pred_boot/unlist_ED10_CI_adj.csv", row.names = FALSE)
 
 IA_CI_ED10_final_100 <- unlist_ED10_CI_100%>%
@@ -542,6 +552,9 @@ colnames(unlist_ED50_CI_100) <- c("x", "y", "iteration")
 unlist_ED50_CI_100$group <- "adj"
 unlist_ED50_CI_100$mix <- "ED50"
 unlist_ED50_CI_100$method <- "IA"
+
+unlist_ED50_CI_100<- unlist_ED50_CI_100%>%
+  mutate(across(c(y), ~ scales::rescale(., to = c(0, ED50_top))))
 write.csv(unlist_ED50_CI_100, "mix_pred_boot/unlist_ED50_CI_adj.csv", row.names = FALSE)
 
 IA_CI_ED50_final_100 <- unlist_ED50_CI_100%>%
@@ -584,7 +597,9 @@ DA_EM_CI_100 <-
       sum(bootmat_list[[j]]$EM_percent_100*(bootmat_list[[j]]$ED50 * exp((bootmat_list[[j]]$slope)*log((1-y)/y))))
     })})
 
-unlist_DA_EM_CI_100 <- cbind(y,  melt(DA_EM_CI_100))
+unlist_DA_EM_CI_100 <- cbind(y,  melt(DA_EM_CI))%>%
+  mutate(across(c(y), ~ scales::rescale(., to = c(0, EM_top))))
+
 colnames(unlist_DA_EM_CI_100) <- c("y", "x", "iteration")
 unlist_DA_EM_CI_100$group <- "adj"
 unlist_DA_EM_CI_100$mix <- "EM"
@@ -606,7 +621,9 @@ DA_ED10_CI_100 <-
       sum(bootmat_list[[j]]$ED10_percent_100*(bootmat_list[[j]]$ED50 * exp((bootmat_list[[j]]$slope)*log((1-y)/y))))
     })})
 
-unlist_DA_ED10_CI_100 <- cbind(y,  melt(DA_ED10_CI_100))
+unlist_DA_ED10_CI_100 <- cbind(y,  melt(DA_ED10_CI_100))%>%
+  mutate(across(c(y), ~ scales::rescale(., to = c(0, ED10_top))))
+
 colnames(unlist_DA_ED10_CI_100) <- c("y", "x", "iteration")
 unlist_DA_ED10_CI_100$group <- "adj"
 unlist_DA_ED10_CI_100$mix <- "ED10"
@@ -628,7 +645,9 @@ DA_ED50_CI_100 <-
       sum(bootmat_list[[j]]$ED50_percent_100*(bootmat_list[[j]]$ED50 * exp((bootmat_list[[j]]$slope )*log((1-y)/y))))
     })})
 
-unlist_DA_ED50_CI_100 <- cbind(y,  melt(DA_ED50_CI_100))
+unlist_DA_ED50_CI_100 <- cbind(y,  melt(DA_ED50_CI_100))%>%
+  mutate(across(c(y), ~ scales::rescale(., to = c(0, ED50_top))))
+
 colnames(unlist_DA_ED50_CI_100) <- c("y", "x", "iteration")
 unlist_DA_ED50_CI_100$group <- "adj"
 unlist_DA_ED50_CI_100$mix <- "ED50"

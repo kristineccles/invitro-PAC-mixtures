@@ -161,7 +161,7 @@ NAec50_plt <- ggplot(mixture_df_reduced, aes(x="", y=NA_EP50, fill=Chemical))+
     axis.ticks = element_blank())
 NAec50_plt
 
-NA_invitro_plt <- ggplot(mixture_df, aes(x="", y=Invitro10_percent, fill=Chemical))+
+NA_invitro_plt <- ggplot(mixture_df_reduced, aes(x="", y=Invitro10_percent, fill=Chemical))+
   geom_bar(stat = "identity")+
   # Make it circular
   coord_polar("y", start=0)+
@@ -185,10 +185,19 @@ combinedh <- ggarrange(em_plt, ec10_plt, ec50_plt,
           legend = "bottom")
 combinedh
 
-ggsave("pie_plot_combined_h.jpg", 
-       combinedh, 
-       dpi = 300, 
-       width = 8,
-       height = 8,
-       units = "in")
+#### Add Indiidual DR from 06 for Fig 1####
+
+fig1 <- ggarrange(combinedh, individ_chems,
+                        labels=c("A", "J"),
+                       ncol = 2, nrow = 1,
+                       widths = c(1, 0.75),
+                       common.legend = FALSE,
+                       legend = "bottom")
+fig1
+
+ggsave("Fig1.jpg", fig1, dpi = 300, 
+       width = 14, height = 6, units = "in")
+
+
+
 

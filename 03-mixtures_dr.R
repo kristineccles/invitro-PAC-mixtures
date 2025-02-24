@@ -8,7 +8,8 @@
 #################################################
 
 # load the data
-mixture_df <- read.csv("mix_conc_df 5-16-2024.csv")
+mixture_df <- read.csv("mix_conc_df_edit.csv")
+mixture_df <- subset(mixture_df, DoseActivesOnly_logM<0)
 
 #convert to uM
 mixture_df$Active_Dose_uM <- 10^(mixture_df$DoseActivesOnly_logM)*1e6
@@ -24,7 +25,7 @@ df_mix$grouping <-paste0(df_mix$Chemicalname,"  ", df_mix$Mixture, "  ",df_mix$D
 #set up the data frame
 NUM_PTS <- 1000
 MIN_LOGX <- (-5)
-MAX_LOGX <- 5 
+MAX_LOGX <- 5
 
 xVec <- 1:NUM_PTS
 x <- as.data.frame(10 ^ (MIN_LOGX + ((MAX_LOGX-MIN_LOGX)*xVec/NUM_PTS)))
@@ -80,6 +81,8 @@ plot(mix_model)
 
 #get coefficients
 mix_model_CI <- tidy(mix_model, conf.int = TRUE)
+#get EC10
+ED(mix_model, 10)
 write.csv(mix_model_CI[,1:6], "mix_model_CI.csv", row.names = FALSE)
 
 #reorganize
@@ -114,14 +117,12 @@ mix_pred <- sapply(n, USE.NAMES = TRUE, simplify = FALSE, FUN = function(i) {
               upperl = c(0, 100, Inf),
               fct=LL.4(fixed=c(NA, FIXED_C , NA, NA), 
                        names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
-  
-  response <- predict(model, newdata = x, interval = "confidence")
-  
-})
+  response <- predict(model, newdata = x, interval = "confidence", level = 0.95)})
 
 predict_df <- cbind(x, melt(mix_pred, id=c("Prediction", "Lower", "Upper")))
 predict_df<- pivot_wider(predict_df, names_from = Var2, values_from = c(value))%>%
   as.data.frame()
+
 # split based on unique character, x
 predict_df <- predict_df%>%
   separate(L1, into = c("mixture", "active", "dosecalc"), sep = "\\s+", extra = "merge")
@@ -139,7 +140,7 @@ predict_df$active <- factor(predict_df$active, levels = c("Active", "All"),
                             labels = c("Active Chemicals", "All Chemicals"))
 
 predict_df$mixture <- factor(predict_df$mixture, levels = c( "EM","ED10", "ED50"),
-                            labels = c("EM Mix", "ENV Mix 1", "ENV Mix 2"))
+                            labels = c("EM", "EXP1", "EXP2"))
 
 # Plots
 measured_mix_plot <- ggplot()+
@@ -152,7 +153,7 @@ measured_mix_plot <- ggplot()+
   scale_linetype_manual(values = c("solid", "dashed"),labels = c("Active Dose (uM)","Total Dose (uM)" ))+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture",
        linetype = "Dose Calculation")+
-  ylim(0, 90)
+  ylim(0, 100)
 measured_mix_plot
 ggsave("measured_mix_plot.jpg",measured_mix_plot,  height = 6, width = 5)
 
@@ -164,18 +165,26 @@ mix_model_coeff_wCI2$group <- paste(mix_model_coeff_wCI2$mixture, mix_model_coef
 
 mix_model_coeff_wCI2 <-  subset(mix_model_coeff_wCI2, dosecalc == "Active_Dose_uM")
 
+#Change Labels
+mix_model_coeff_wCI2$group<- gsub("ED10", "EXP1", mix_model_coeff_wCI2$group)
+mix_model_coeff_wCI2$group<- gsub("ED50", "EXP2", mix_model_coeff_wCI2$group)
+mix_model_coeff_wCI2$mixture<- gsub("ED10", "EXP1", mix_model_coeff_wCI2$mixture)
+mix_model_coeff_wCI2$mixture<- gsub("ED50", "EXP2", mix_model_coeff_wCI2$mixture)
+mix_model_coeff_wCI2$group <- factor(mix_model_coeff_wCI2$group, levels = rev(sort(unique(mix_model_coeff_wCI2$group))))
+
+
 # make plot of just EC50
-measured_mix_ED50<- ggplot(data = mix_model_coeff_wCI2, aes(x = (ED50), y = group, color = mixture))+
+measured_mix_ED50<- ggplot(data = mix_model_coeff_wCI2, aes(x = log10(ED50), y = group, color = mixture))+
   geom_point()+
   #facet_grid(vars(dosecalc), scales = "free")+
   scale_color_viridis(discrete= TRUE)+
-  geom_errorbar(data = subset(mix_model_coeff_wCI2, dosecalc == "Active_Dose_uM"), aes(xmin=(ED50-1.96*SE_ED50), 
-                                                 xmax=(ED50+1.96*SE_ED50), color = mixture), 
+  geom_errorbar(data = mix_model_coeff_wCI2, aes(xmin=log10(ED50-1.96*SE_ED50), 
+                                                 xmax=log10(ED50+1.96*SE_ED50), color = mixture), 
                 width=.2, position=position_dodge(.9))+
   theme_bw()+
   labs(color ="Mixture")+
   ylab("Mixture")+
-  xlab("EC50 (uM)")
+  xlab("Log 10 EC50 (uM)")
 measured_mix_ED50
 
 measured_mix_top<- ggplot(data = mix_model_coeff_wCI2, aes(x = (`Upper Limit`), y = group, color = mixture))+
@@ -207,9 +216,17 @@ measured_mix_slope
 combined_plot_mix <- ggarrange(measured_mix_ED50, measured_mix_top,measured_mix_slope,
                            ncol = 1,
                            vjust =3,
-                           labels = "AUTO",
+                           labels = NULL,
                            common.legend = TRUE,
                            legend = "bottom")
 combined_plot_mix
 
-ggsave("measured_mix_parameters.jpg", combined_plot_mix,  height =10, width =4)
+combined_plot_mix2 <- ggarrange(measured_mix_plot,combined_plot_mix,
+                               ncol = 2,
+                               labels = "AUTO",
+                               common.legend = TRUE,
+                               legend = "bottom")
+combined_plot_mix2
+
+ggsave("Fig2.jpg", combined_plot_mix2,  height =8, width =8)
+
