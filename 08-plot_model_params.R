@@ -3,9 +3,8 @@
 # Written By: Kristin Eccles
 # Date: September 22nd, 2022
 # Updated: April 17th, 2024
-# Note: Must run mixture_modeling.R
+# Note: Must run 03-mixture_modeling.R
 # Import files are very large ~ 4GB
-
 #################################################
 
 # Load libraries
