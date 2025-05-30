@@ -54,28 +54,28 @@ measured_df$active <- factor(measured_df$active, levels = c("Active", "All"),
                        labels = c("Active Chemicals", "All Chemicals"))
 
 DA_df$category <- factor(DA_df$category, levels = c("Adjusted", "Unadjusted"), 
-                        labels = c("% Contribution = 100", "% Contribution ≠ 100"))
+                        labels = c("% Contribution equals 100", "% Contribution does not equal 100"))
 IA_df$category <- factor(IA_df$category, levels = c("Adjusted", "Unadjusted"), 
-                        labels = c("% Contribution = 100", "% Contribution ≠ 100"))
+                        labels = c("% Contribution equals 100", "% Contribution does not equal 100"))
 GCA_df$category <- factor(GCA_df$category, levels = c("Adjusted", "Unadjusted"), 
-                          labels = c("% Contribution = 100", "% Contribution ≠ 100"))
+                          labels = c("% Contribution equals 100", "% Contribution does not equal 100"))
 
 # Remove unwanted box
 DA_df <- DA_df %>%
-  filter(!(category == "% Contribution ≠ 100" & active == "Active Chemicals"))
+  filter(!(category == "% Contribution does not equal 100" & active == "Active Chemicals"))
 
 IA_df <- IA_df %>%
-  filter(!(category == "% Contribution ≠ 100" & active == "Active Chemicals"))
+  filter(!(category == "% Contribution does not equal 100" & active == "Active Chemicals"))
 
 GCA_df <- GCA_df %>%
-  filter(!(category == "% Contribution ≠ 100" & active == "Active Chemicals"))
+  filter(!(category == "% Contribution does not equal 100" & active == "Active Chemicals"))
 
 measured_df2 <- measured_df
-measured_df2$category <- "% Contribution ≠ 100" 
-measured_df$category <- "% Contribution = 100" 
+measured_df2$category <- "% Contribution does not equal 100" 
+measured_df$category <- "% Contribution equals 100" 
 measured_df <- rbind(measured_df, measured_df2)
 measured_df <- measured_df %>%
-  filter(!(category == "% Contribution ≠ 100" & active == "Active Chemicals"))
+  filter(!(category == "% Contribution does not equal 100" & active == "Active Chemicals"))
 
 #################################################################################################
 #### Plots ####
@@ -175,5 +175,5 @@ combined_plot_all
 
 
 
-ggsave("Fig3.jpg", combined_plot_all,  height =10, width =10)
+ggsave("Fig4_Alt.jpg", combined_plot_all,  height =10, width =10)
 

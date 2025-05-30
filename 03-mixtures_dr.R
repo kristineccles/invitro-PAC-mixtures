@@ -150,9 +150,9 @@ measured_mix_plot <- ggplot()+
   facet_grid(vars(mixture))+
   scale_fill_manual(values = c("#2A788EFF", "#7AD151FF"))+
   scale_color_manual(values = c("#2A788EFF", "#7AD151FF"))+
-  scale_linetype_manual(values = c("solid", "dashed"),labels = c("Active Dose (uM)","Total Dose (uM)" ))+
+  scale_linetype_manual(values = c("solid", "dashed"),labels = c("Active Concentration (uM)","Total Concentration (uM)" ))+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture",
-       linetype = "Dose Calculation")+
+       linetype = "Concentration Calculation")+
   ylim(0, 100)
 measured_mix_plot
 ggsave("measured_mix_plot.jpg",measured_mix_plot,  height = 6, width = 5)
@@ -174,12 +174,12 @@ mix_model_coeff_wCI2$group <- factor(mix_model_coeff_wCI2$group, levels = rev(so
 
 
 # make plot of just EC50
-measured_mix_ED50<- ggplot(data = mix_model_coeff_wCI2, aes(x = log10(ED50), y = group, color = mixture))+
+measured_mix_ED50<- ggplot(data = mix_model_coeff_wCI2, aes(x = log10(ED50), y = group))+
   geom_point()+
   #facet_grid(vars(dosecalc), scales = "free")+
   scale_color_viridis(discrete= TRUE)+
   geom_errorbar(data = mix_model_coeff_wCI2, aes(xmin=log10(ED50-1.96*SE_ED50), 
-                                                 xmax=log10(ED50+1.96*SE_ED50), color = mixture), 
+                                                 xmax=log10(ED50+1.96*SE_ED50)), 
                 width=.2, position=position_dodge(.9))+
   theme_bw()+
   labs(color ="Mixture")+
@@ -187,12 +187,12 @@ measured_mix_ED50<- ggplot(data = mix_model_coeff_wCI2, aes(x = log10(ED50), y =
   xlab("Log 10 EC50 (uM)")
 measured_mix_ED50
 
-measured_mix_top<- ggplot(data = mix_model_coeff_wCI2, aes(x = (`Upper Limit`), y = group, color = mixture))+
+measured_mix_top<- ggplot(data = mix_model_coeff_wCI2, aes(x = (`Upper Limit`), y = group))+
   geom_point()+
   #facet_grid(vars(dosecalc), scales = "free")+
-  scale_color_viridis(discrete= TRUE)+
+  #scale_color_viridis(discrete= TRUE)+
   geom_errorbar(data = mix_model_coeff_wCI2, aes(xmin=(`Upper Limit`-1.96*SE_UpperLimit), 
-                 xmax=(`Upper Limit`+1.96*SE_UpperLimit), color = mixture), 
+                 xmax=(`Upper Limit`+1.96*SE_UpperLimit)), 
                 width=.2, position=position_dodge(.9))+
   theme_bw()+
   labs(color ="Mixture")+
@@ -200,11 +200,11 @@ measured_mix_top<- ggplot(data = mix_model_coeff_wCI2, aes(x = (`Upper Limit`), 
   xlab("Top of the Curve (%)")
 measured_mix_top
 
-measured_mix_slope<- ggplot(data = mix_model_coeff_wCI2, aes(x = (Slope*-1), y = group, color = mixture))+
+measured_mix_slope<- ggplot(data = mix_model_coeff_wCI2, aes(x = (Slope*-1), y = group))+
   geom_point()+
-  scale_color_viridis(discrete= TRUE)+
+  #scale_color_viridis(discrete= TRUE)+
   geom_errorbar(data = mix_model_coeff_wCI2, aes(xmin=((Slope-1.96*SE_slope)*-1), 
-                                                 xmax=((Slope+1.96*SE_slope)*-1), color = mixture), 
+                                                 xmax=((Slope+1.96*SE_slope)*-1)), 
                 width=.2, position=position_dodge(.9))+
   theme_bw()+
   labs(color ="Mixture")+
@@ -228,5 +228,5 @@ combined_plot_mix2 <- ggarrange(measured_mix_plot,combined_plot_mix,
                                legend = "bottom")
 combined_plot_mix2
 
-ggsave("Fig2.jpg", combined_plot_mix2,  height =8, width =8)
+ggsave("Fig2.jpg", combined_plot_mix2,  height =6, width =10)
 
