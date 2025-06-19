@@ -44,12 +44,14 @@ group_params <- function(data, fixed_c_value) {
   slopeVector <- vector(mode = "numeric")
   topVector <- vector(mode = "numeric")
   ec50Vector <- vector(mode = "numeric")
+  ec10Vector <- vector(mode = "numeric")
   
   # Initialize an empty data frame to store output data
   output_data <- data.frame(groupVector = character(),
                             slopeVector = numeric(),
                             topVector = numeric(),
                             ec50Vector = numeric(),
+                            ec10Vector = numeric(),
                             stringsAsFactors = FALSE)
   
   # Get unique id
@@ -67,13 +69,15 @@ group_params <- function(data, fixed_c_value) {
     
     # Extract coefficients
     coefficient <- i_model$coefficients
+    ED10 <- ED(i_model, c(10)) 
     
     # Store results for this iteration
     output_data <- rbind(output_data, data.frame(
       groupVector = paste(unique(sub_data$group), unique(sub_data$mix), unique(sub_data$method)),
       slopeVector = coefficient[1],
       topVector = coefficient[2],
-      ec50Vector = coefficient[3]
+      ec50Vector = coefficient[3],
+      ec10Vector = ED10[1]
     ))
     print(output_data)
   }
@@ -89,7 +93,10 @@ group_params <- function(data, fixed_c_value) {
               top_upper = quantile(topVector, 0.975),
               EC50 = quantile(ec50Vector, 0.5),
               EC50_lower = quantile(ec50Vector, 0.025),
-              EC50_upper = quantile(ec50Vector, 0.975)
+              EC50_upper = quantile(ec50Vector, 0.975),
+              EC10 = quantile(ec10Vector, 0.5),
+              EC10_lower = quantile(ec10Vector, 0.025),
+              EC10_upper = quantile(ec10Vector, 0.975)
     ) %>%
     as.data.frame()
   
@@ -135,6 +142,10 @@ mix_model_coeff <- tidy(mix_model, conf.int = TRUE)%>%
   as.data.frame()
 mix_model_coeff
 
+
+mix_EC10 <- as.data.frame(ED(mix_model, c(10), interval = "delta"))
+names(mix_EC10) <- c("EC10", "Std. Error", "EC10_lower", "EC10_upper")
+mix_model_coeff <- cbind(mix_model_coeff, mix_EC10)
 
 # Prepare Naming for Plotting
 mix_model_coeff_edit<- mix_model_coeff %>%
@@ -287,7 +298,7 @@ combined_CI_all <- ggarrange(all_slope, all_top, all_EC50,
                                 ncol = 3,
                                 nrow = 1,
                                 vjust =1,
-                                labels = c("G", "H", "I"),
+                                labels = c("A", "B", C),
                                 common.legend = TRUE,
                                 legend = "bottom")
 combined_CI_all
@@ -300,22 +311,22 @@ boxplot_combined <- ggarrange(all_slope, all_top, all_EC50,
                                 ncol = 3,
                                 nrow = 2,
                                 heights = c(1.5,1),
-                                labels = c("D", "E", "F", "G", "H", "I"),
+                                labels = c("A", "B", "C", "D", "E", "F"),
                                 common.legend = TRUE,
                                 legend = "bottom")
 
 boxplot_combined
 
 
-combined_plot_final <- ggarrange(combined_plot_all, boxplot_combined,
-                             ncol = 1,
-                             nrow = 2, 
-                             widths = c(1,1.5),
-                             common.legend = TRUE,
-                             legend = "bottom")
-combined_plot_final
+# combined_plot_final <- ggarrange(combined_plot_all, boxplot_combined,
+#                              ncol = 1,
+#                              nrow = 2, 
+#                              widths = c(1,1.5),
+#                              common.legend = TRUE,
+#                              legend = "bottom")
+# combined_plot_final
 
-ggsave("Figure 4.jpg", combined_plot_final,  height =16, width =14)
+ggsave("Figure S1.jpg", boxplot_combined,  height =14, width =16)
 
 
 # compare just the EC50s

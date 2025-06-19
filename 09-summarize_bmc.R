@@ -255,7 +255,56 @@ combined_bmd
 
 ggsave("combined_bmd10.jpg", combined_bmd,  height =12, width =5)
 
+#combined with EC10
+
+all_EC10<- ggplot()+
+  #modeled
+  geom_point(data = output_edit_all, aes(x = log10(EC10), y = model, group = id, color = model), size = 2)+
+  geom_errorbar(data = output_edit_all, aes(x = log10(EC10), y = model, xmin=log10(EC10_lower), xmax=log10(EC10_upper), group = id, 
+                                            color = model), 
+                width=.1, size = 1, position=position_dodge(.9))+
+  
+  #measured
+  geom_point(data = subset(mix_model_coeff_edit2, active == "All Chemicals" | curve == "Active_Dose_uM"), aes(x = log10(EC50), y = model, group = active, color = model,), size = 2)+
+  geom_errorbar(data = subset(mix_model_coeff_edit2, active == "All Chemicals" | curve == "Active_Dose_uM"), aes(x = log10(EC50), y = model, xmin=log10(EC50_lower), xmax=log10(EC50_upper), group = active, 
+                                                                                                                 color = model), 
+                width=.1, size = 1, position=position_dodge(.9))+
+  theme_bw()+
+  facet_nested(group ~ mixture+active)+
+  scale_color_manual(name = "Group",
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+  labs( y = "Method", x = "Log10 EC10")
+all_EC10
+
+active_EC10<- ggplot()+
+  #modeled
+  geom_point(data = subset(output_edit, group == "% Contribution equals 100"), aes(x = log10(EC10), y = model, group = id, color = model), size = 2)+
+  geom_errorbar(data = subset(output_edit, group == "% Contribution equals 100"), aes(x = log10(EC10), y = model, xmin=log10(EC10_lower), xmax=log10(EC10_upper), group = id, 
+                                                                                      color = model), 
+                width=.1, size = 1, position=position_dodge(.9))+
+  
+  #measured
+  geom_point(data = subset(mix_model_coeff_edit, active == "Active Chemicals"), aes(x = log10(EC10), y = model, group = active, color = model,), size = 2)+
+  geom_errorbar(data = subset(mix_model_coeff_edit, active == "Active Chemicals"), aes(x = log10(EC10), y = model, xmin=log10(EC10_lower), xmax=log10(EC10_upper), group = active, 
+                                                                                       color = model), 
+                width=.1, size = 1, position=position_dodge(.9))+
+  theme_bw()+
+  facet_nested(group ~ mixture+active )+
+  scale_color_manual(name = "Group",
+                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+  labs( y = "Method", x = "Log10 EC10")
+active_EC10
 
 
+combined_EC <- ggarrange(all_bmd, all_EC10, active_bmd, active_EC10, 
+                           ncol = 2,
+                           nrow = 2, 
+                           heights = c(1.5, 1),
+                           labels = c("A", "B", "C", "D"),
+                           common.legend = TRUE,
+                           legend = "bottom")
+combined_EC
+
+ggsave("combined_EC_BMC10.jpg", combined_EC,  height =10, width =10)
 
 
