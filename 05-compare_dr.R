@@ -24,8 +24,9 @@ GCA_df$active <- "Active"
 GCA_df1 <- GCA_df
 GCA_df1$active <- "All"
 GCA_df <- rbind(GCA_df, GCA_df1)
-GCA_df$active <- factor(GCA_df$active, levels = c("Active", "All"),
-                       labels = c("Active Chemicals", "All Chemicals"))
+GCA_df$active <- factor(GCA_df$active, 
+                        levels = c("All", "Active"),
+                        labels = c("All Chemicals", "Active Chemicals"))
 
 IA_adj <- read.csv("IA_df_adj.csv")
 IA_unadj <- read.csv("IA_df_noadj.csv")
@@ -34,8 +35,9 @@ IA_df$active <- "Active"
 IA_df1 <- IA_df
 IA_df1$active <- "All"
 IA_df <- rbind(IA_df, IA_df1)
-IA_df$active <- factor(IA_df$active, levels = c("Active", "All"),
-                        labels = c("Active Chemicals", "All Chemicals"))
+IA_df$active <- factor(IA_df$active,                         
+                       levels = c("All", "Active"),
+                       labels = c("All Chemicals", "Active Chemicals"))
 
 DA_adj <- read.csv("DA_df_adj.csv")
 DA_unadj <- read.csv("DA_df_noadj.csv")
@@ -44,14 +46,15 @@ DA_df$active <- "Active"
 DA_df1 <- DA_df
 DA_df1$active <- "All"
 DA_df <- rbind(DA_df, DA_df1)
-DA_df$active <- factor(DA_df$active, levels = c("Active", "All"),
-                       labels = c("Active Chemicals", "All Chemicals"))
+DA_df$active <- factor(DA_df$active, 
+                       levels = c("All", "Active"),
+                       labels = c("All Chemicals", "Active Chemicals"))
 
 measured_df <- read.csv("predict_df.csv")
 
 # Modify the labels
-measured_df$active <- factor(measured_df$active, levels = c("Active", "All"),
-                       labels = c("Active Chemicals", "All Chemicals"))
+measured_df$active <- factor(measured_df$active, levels = c("All", "Active"),
+                       labels = c("All Chemicals", "Active Chemicals"))
 
 DA_df$category <- factor(DA_df$category, levels = c("Adjusted", "Unadjusted"), 
                         labels = c("% Contribution equals 100", "% Contribution does not equal 100"))
@@ -152,7 +155,7 @@ compare_ED50 <- ggplot()+
   geom_ribbon(data=subset(IA_df, mix_ratio == "ED50"), aes(x=log10(x), y=mean, ymin=y_lower, ymax=y_upper), fill = "#2A788EFF",alpha=0.2) +
   
   theme_bw()+
-  facet_wrap(. ~ active+category, nrow = 3)+
+  facet_nested(category ~ mix_ratio+active )+
   ylim(0, 100)+
   xlim(-5, 5)+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture")+

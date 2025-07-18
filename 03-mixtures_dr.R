@@ -134,13 +134,13 @@ predict_df <- predict_df%>%
 write.csv(predict_df, "predict_df.csv")
 
 #remove invitro before plotting
-predict_df <- subset(predict_df, ! mixture == "inVitro" )
+#predict_df <- subset(predict_df, ! mixture == "inVitro" )
 
 predict_df$active <- factor(predict_df$active, levels = c("Active", "All"),
                             labels = c("Active Chemicals", "All Chemicals"))
 
-predict_df$mixture <- factor(predict_df$mixture, levels = c( "EM","ED10", "ED50"),
-                            labels = c("EM", "EXP1", "EXP2"))
+predict_df$mixture <- factor(predict_df$mixture, levels = c( "EM","ED10", "ED50", "inVitro"),
+                            labels = c("EM", "EXP1", "EXP2", "EXP3"))
 
 # Plots
 measured_mix_plot <- ggplot()+
@@ -160,7 +160,7 @@ ggsave("measured_mix_plot.jpg",measured_mix_plot,  height = 6, width = 5)
 ################################################################
 #### Parameters Only ####
 #remove in vitro
-mix_model_coeff_wCI2 <- subset(mix_model_coeff_wCI2, ! mixture  == "inVitro")
+#mix_model_coeff_wCI2 <- subset(mix_model_coeff_wCI2, ! mixture  == "inVitro")
 mix_model_coeff_wCI2$group <- paste(mix_model_coeff_wCI2$mixture, mix_model_coeff_wCI2$active)
 
 mix_model_coeff_wCI2 <-  subset(mix_model_coeff_wCI2, dosecalc == "Active_Dose_uM")
@@ -168,8 +168,10 @@ mix_model_coeff_wCI2 <-  subset(mix_model_coeff_wCI2, dosecalc == "Active_Dose_u
 #Change Labels
 mix_model_coeff_wCI2$group<- gsub("ED10", "EXP1", mix_model_coeff_wCI2$group)
 mix_model_coeff_wCI2$group<- gsub("ED50", "EXP2", mix_model_coeff_wCI2$group)
+mix_model_coeff_wCI2$group<- gsub("inVitro", "EXP3", mix_model_coeff_wCI2$group)
 mix_model_coeff_wCI2$mixture<- gsub("ED10", "EXP1", mix_model_coeff_wCI2$mixture)
 mix_model_coeff_wCI2$mixture<- gsub("ED50", "EXP2", mix_model_coeff_wCI2$mixture)
+mix_model_coeff_wCI2$mixture<- gsub("inVitro", "EXP3", mix_model_coeff_wCI2$mixture)
 mix_model_coeff_wCI2$group <- factor(mix_model_coeff_wCI2$group, levels = rev(sort(unique(mix_model_coeff_wCI2$group))))
 
 

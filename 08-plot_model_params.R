@@ -38,21 +38,9 @@ data_unlist <- data_unlist[rowSums(sapply(data_unlist[, numeric_cols], is.finite
 # Define function to run individual model analyses
 group_params <- function(data, fixed_c_value) {
   
-  # Initialize vectors for storing results
-  iterVector <- vector(mode = "numeric")
-  groupVector <- vector(mode = "character")
-  slopeVector <- vector(mode = "numeric")
-  topVector <- vector(mode = "numeric")
-  ec50Vector <- vector(mode = "numeric")
-  ec10Vector <- vector(mode = "numeric")
-  
-  # Initialize an empty data frame to store output data
-  output_data <- data.frame(groupVector = character(),
-                            slopeVector = numeric(),
-                            topVector = numeric(),
-                            ec50Vector = numeric(),
-                            ec10Vector = numeric(),
-                            stringsAsFactors = FALSE)
+  # Initialize list to collect results
+  results_list <- list()
+  failed_ids <- c()
   
   # Get unique id
   unique_itter <- unique(data$id)
@@ -63,45 +51,65 @@ group_params <- function(data, fixed_c_value) {
     # Subset data for the current id
     sub_data <- subset(data, id == i)
     
-    # Apply the selected model
-    i_model <- drm(y ~ x, data = sub_data, fct = LL.4(fixed = c(NA, fixed_c_value, NA, NA),
-                                                      names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
+    # Skip if insufficient variation or too few points
+    if (nrow(sub_data) < 4 || length(unique(sub_data$y)) <= 2) {
+      message("Insufficient data for ID: ", i)
+      next
+    }
+    
+    # Apply the selected model with tryCatch
+    i_model <- tryCatch({
+      drm(y ~ x, data = sub_data,
+          fct = LL.4(fixed = c(NA, fixed_c_value, NA, NA),
+                     names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
+    }, error = function(e) {
+      message("Model failed for ID: ", i, " - ", e$message)
+      failed_ids <<- c(failed_ids, i)
+      return(NULL)
+    })
+    
+    # Skip to next iteration if model failed
+    if (is.null(i_model)) next
     
     # Extract coefficients
     coefficient <- i_model$coefficients
-    ED10 <- ED(i_model, c(10)) 
+    ED10 <- ED(i_model, c(10))
     
     # Store results for this iteration
-    output_data <- rbind(output_data, data.frame(
+    results_list[[length(results_list) + 1]] <- data.frame(
       groupVector = paste(unique(sub_data$group), unique(sub_data$mix), unique(sub_data$method)),
       slopeVector = coefficient[1],
       topVector = coefficient[2],
       ec50Vector = coefficient[3],
       ec10Vector = ED10[1]
-    ))
-    print(output_data)
+    )
   }
   
-  # Calculate summary statistics for the individual model
-  measured_summary <-  output_data %>%
-    group_by(group = groupVector)%>%
-    summarize(slope_mean = quantile(slopeVector * -1, 0.5),  # Adjust for negative slope in hill models
-              slope_lower = quantile(slopeVector * -1, 0.025),
-              slope_upper = quantile(slopeVector * -1, 0.975),
-              top = quantile(topVector, 0.5),
-              top_lower = quantile(topVector, 0.025),
-              top_upper = quantile(topVector, 0.975),
-              EC50 = quantile(ec50Vector, 0.5),
-              EC50_lower = quantile(ec50Vector, 0.025),
-              EC50_upper = quantile(ec50Vector, 0.975),
-              EC10 = quantile(ec10Vector, 0.5),
-              EC10_lower = quantile(ec10Vector, 0.025),
-              EC10_upper = quantile(ec10Vector, 0.975)
+  # Combine all collected results into a single data frame
+  output_data <- do.call(rbind, results_list)
+  
+  # Calculate summary statistics
+  measured_summary <- output_data %>%
+    group_by(group = groupVector) %>%
+    summarize(
+      slope_mean = quantile(slopeVector * -1, 0.5),
+      slope_lower = quantile(slopeVector * -1, 0.025),
+      slope_upper = quantile(slopeVector * -1, 0.975),
+      top = quantile(topVector, 0.5),
+      top_lower = quantile(topVector, 0.025),
+      top_upper = quantile(topVector, 0.975),
+      EC50 = quantile(ec50Vector, 0.5),
+      EC50_lower = quantile(ec50Vector, 0.025),
+      EC50_upper = quantile(ec50Vector, 0.975),
+      EC10 = quantile(ec10Vector, 0.5),
+      EC10_lower = quantile(ec10Vector, 0.025),
+      EC10_upper = quantile(ec10Vector, 0.975)
     ) %>%
     as.data.frame()
   
   print(measured_summary)
 }
+
 
 # Example call with  dataset and specific FIXED_C constant
 # Assuming data is defined and FIXED_C is a constant
@@ -115,8 +123,8 @@ output_edit$mixture<- gsub("ED10", "EXP1", output_edit$mixture)
 output_edit$mixture<- gsub("ED50", "EXP2", output_edit$mixture)
 output_edit$id <- paste(output_edit$group, output_edit$mixture, output_edit$model)
 output_edit$id2 <- paste( output_edit$mixture, output_edit$model)
-output_edit$group <- factor(output_edit$group, levels = c("adj", "unadj"), 
-                            labels = c("% Contribution equals 100", "% Contribution does not equal 100"))
+output_edit$group <- factor(output_edit$group, levels = c("unadj", "adj"), 
+                            labels = c("% Contribution does not equal 100", "% Contribution equals 100"))
 
 output_edit$active <- "Active Chemicals"
 
@@ -151,9 +159,10 @@ mix_model_coeff <- cbind(mix_model_coeff, mix_EC10)
 mix_model_coeff_edit<- mix_model_coeff %>%
   separate(curve, into = c("mixture", "adj", "active"), sep = " ", remove = FALSE)%>%
   as.data.frame()
-mix_model_coeff_edit <- subset(mix_model_coeff_edit, mixture != "inVitro")
+#mix_model_coeff_edit <- subset(mix_model_coeff_edit, mixture != "inVitro")
 mix_model_coeff_edit$mixture<- gsub("ED10", "EXP1", mix_model_coeff_edit$mixture)
 mix_model_coeff_edit$mixture<- gsub("ED50", "EXP2", mix_model_coeff_edit$mixture)
+mix_model_coeff_edit$mixture<- gsub("inVitro", "EXP3", mix_model_coeff_edit$mixture)
 mix_model_coeff_edit$id <- paste(mix_model_coeff_edit$mixture, mix_model_coeff_edit$model)
 mix_model_coeff_edit$id2 <- paste( mix_model_coeff_edit$mixture, mix_model_coeff_edit$model)
 mix_model_coeff_edit$model <- "Measured"
@@ -178,7 +187,8 @@ active_slope<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Slope")
 active_slope
 
@@ -197,7 +207,8 @@ active_top<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Top (%)")
 active_top
 
@@ -216,7 +227,8 @@ active_EC50<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Log10 EC50")
 active_EC50
 
@@ -251,7 +263,8 @@ all_slope<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active)+
   scale_color_manual(name = "Group",
-                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Slope")
 all_slope
 
@@ -270,7 +283,8 @@ all_top<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active)+
   scale_color_manual(name = "Group",
-                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Top (%)")
 all_top
 
@@ -287,18 +301,19 @@ all_EC50<- ggplot()+
                                                                                        color = model), 
                 width=.1, size = 1, position=position_dodge(.9))+
   theme_bw()+
-  facet_nested(group ~ mixture+active)+
+  facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Log10 EC50")
 all_EC50
 
 
 combined_CI_all <- ggarrange(all_slope, all_top, all_EC50,
-                                ncol = 3,
+                                ncol = 4,
                                 nrow = 1,
                                 vjust =1,
-                                labels = c("A", "B", C),
+                                labels = c("A", "B", "C"),
                                 common.legend = TRUE,
                                 legend = "bottom")
 combined_CI_all
@@ -326,7 +341,7 @@ boxplot_combined
 #                              legend = "bottom")
 # combined_plot_final
 
-ggsave("Figure S1.jpg", boxplot_combined,  height =14, width =16)
+ggsave("Figure S1.jpg", boxplot_combined,  height =10, width =16)
 
 
 # compare just the EC50s
@@ -340,5 +355,5 @@ combined_EC50 <- ggarrange(all_EC50, active_EC50,
                                  legend = "bottom")
 combined_EC50
 
-ggsave("combined_EC50.jpg", combined_EC50,  height =12, width =5)
+ggsave("combined_EC50.jpg", combined_EC50,  height =12, width =6)
 

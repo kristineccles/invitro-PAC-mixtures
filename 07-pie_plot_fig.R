@@ -179,7 +179,8 @@ NA_invitro_plt
 combinedh <- ggarrange(em_plt, ec10_plt, ec50_plt, 
                        em_plt6, ec10_plt6, ec50_plt6,
                        NAem_plt, NAec10_plt, NAec50_plt,
-          labels="AUTO", 
+          labels=c("B", "C", "D", "E",
+                   "F", "G", "H", "I", "J"), 
           ncol = 3, nrow = 3,
           common.legend = TRUE,
           legend = "bottom")
@@ -187,16 +188,16 @@ combinedh
 
 #### Add Indiidual DR from 06 for Fig 1####
 
-fig1 <- ggarrange(combinedh, individ_chems,
-                        labels=c("A", "J"),
-                       ncol = 2, nrow = 1,
+fig1 <- ggarrange(individ_chems, combinedh, 
+                        labels=c("A", " "),
+                       ncol = 1, nrow = 2,
                        widths = c(1, 0.75),
                        common.legend = FALSE,
                        legend = "bottom")
 fig1
 
 ggsave("Fig1.jpg", fig1, dpi = 300, 
-       width = 14, height = 6, units = "in")
+       width = 6.5, height = 12, units = "in")
 
 
 

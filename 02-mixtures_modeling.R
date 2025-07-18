@@ -117,7 +117,7 @@ coeff_fractions$EM_percent_100 <- coeff_fractions$EM_mM/sum(coeff_fractions$EM_m
 coeff_fractions$ED10_percent_100 <- coeff_fractions$EP10_mM/sum(coeff_fractions$EP10_mM)
 coeff_fractions$ED50_percent_100 <- coeff_fractions$EP50_mM/sum(coeff_fractions$EP50_mM)
 
-invitro_top <- weighted.mean(coeff_fractions$`Upper Limit`, coeff_fractions$Invitro10_percent)
+invitro_curve_top <- weighted.mean(coeff_fractions$`Upper Limit`, coeff_fractions$Invitro10_percent)
 EM_top <- weighted.mean(coeff_fractions$`Upper Limit`, coeff_fractions$EM_percent_100)
 ED10_top <- weighted.mean(coeff_fractions$`Upper Limit`, coeff_fractions$ED10_percent_100)
 ED50_top <- weighted.mean(coeff_fractions$`Upper Limit`, coeff_fractions$ED50_percent_100)
@@ -176,7 +176,7 @@ B1ED50_boot <- sapply(setNames(n, n), FUN = function(x) {
 
 B1ED50_boot_melt <- melt(B1ED50_boot)
 
-B1bootmat <- as.data.frame(cbind(ED50_boot_melt[,1], B1Top_boot_melt))
+B1bootmat <- as.data.frame(cbind(B1ED50_boot_melt[,1], B1Top_boot_melt))
 colnames(B1bootmat) <- cbind("ED50","Top", "chemical")
 #add iteration number for each chemical
 B1bootmat$itter <- 1:MCiter

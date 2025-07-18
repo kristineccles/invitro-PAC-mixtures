@@ -38,7 +38,9 @@ data_unlist <- na.omit(data_unlist)
 
 # Create the `id` columns
 data_unlist$id <- paste(data_unlist$iteration, data_unlist$group, data_unlist$mix, data_unlist$method)
+data_unlist$id2 <- paste(data_unlist$mix, data_unlist$method)
 
+unique(data_unlist$id2)
 model_bmd_calc <- list()
 
 for (chem in unique(data_unlist$id)) {
@@ -103,8 +105,8 @@ model_bmd_coeff_edit<- model_summary %>%
 #Change Labels
 model_bmd_coeff_edit$mixture<- gsub("ED10", "EXP1", model_bmd_coeff_edit$mixture)
 model_bmd_coeff_edit$mixture<- gsub("ED50", "EXP2", model_bmd_coeff_edit$mixture)
-model_bmd_coeff_edit$group <- factor(model_bmd_coeff_edit$group, levels = c("adj", "unadj"), 
-                            labels = c("% Contribution equals 100", "% Contribution does not equal 100"))
+model_bmd_coeff_edit$group <- factor(model_bmd_coeff_edit$group, levels = c("unadj", "adj"), 
+                            labels = c("% Contribution does not equal 100", "% Contribution equals 100"))
 
 model_bmd_coeff_edit$id <- paste(model_bmd_coeff_edit$mixture, model_bmd_coeff_edit$model)
 
@@ -191,16 +193,14 @@ mix_bmd_coeff_edit<- tidy_mix %>%
   as.data.frame()
 mix_bmd_coeff_edit$model <- "Measured"
 
-# remove invitro
-mix_bmd_edit <- subset(mix_bmd_coeff_edit, mixture != "inVitro")
-
 #Change Labels
-mix_bmd_edit$mixture<- gsub("ED10", "EXP1", mix_bmd_edit$mixture)
-mix_bmd_edit$mixture<- gsub("ED50", "EXP2", mix_bmd_edit$mixture)
+mix_bmd_coeff_edit$mixture<- gsub("ED10", "EXP1", mix_bmd_coeff_edit$mixture)
+mix_bmd_coeff_edit$mixture<- gsub("ED50", "EXP2", mix_bmd_coeff_edit$mixture)
+mix_bmd_coeff_edit$mixture<- gsub("inVitro", "EXP3", mix_bmd_coeff_edit$mixture)
 
-mix_bmd_edit$active <- factor(mix_bmd_edit$active, levels = c("Active", "All"),
+mix_bmd_coeff_edit$active <- factor(mix_bmd_coeff_edit$active, levels = c("Active", "All"),
                              labels = c("Active Chemicals", "All Chemicals"))
-mix_bmd_edit$id <- paste(mix_bmd_edit$mixture, mix_bmd_edit$model)
+mix_bmd_coeff_edit$id <- paste(mix_bmd_coeff_edit$mixture, mix_bmd_coeff_edit$model)
 ###########################################################################################################
 #### Plot ####
 active_bmd<- ggplot()+
@@ -211,18 +211,19 @@ active_bmd<- ggplot()+
                 width=.1, size = 1, position=position_dodge(.9))+
   
   #measured
-  geom_point(data = subset(mix_bmd_edit, active == "Active Chemicals"), aes(x = log10(bmd), y = model, group = active, color = model,), size = 2)+
-  geom_errorbar(data = subset(mix_bmd_edit, active == "Active Chemicals"), aes(x = log10(bmd), y = model, xmin=log10(bmdl), xmax=log10(bmdu), group = active, 
+  geom_point(data = subset(mix_bmd_coeff_edit, active == "Active Chemicals"), aes(x = log10(bmd), y = model, group = active, color = model,), size = 2)+
+  geom_errorbar(data = subset(mix_bmd_coeff_edit, active == "Active Chemicals"), aes(x = log10(bmd), y = model, xmin=log10(bmdl), xmax=log10(bmdu), group = active, 
                                                                                        color = model), 
                 width=.1, size = 1, position=position_dodge(.9))+
   theme_bw()+
   facet_grid(group ~ mixture+active, drop = TRUE)+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
-  labs( y = "Method", x = "Log10 BMD10")
+                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
+  labs( y = "Method", x = "Log10 BMC10")
 active_bmd
 
-mix_bmd_edit2 <- mix_bmd_edit[!grepl("Total_Dose_uM", mix_bmd_edit$adj), ]
+mix_bmd_edit2 <- mix_bmd_coeff_edit[!grepl("Total_Dose_uM", mix_bmd_coeff_edit$adj), ]
 
 all_bmd<- ggplot()+
   #modeled
@@ -239,8 +240,9 @@ all_bmd<- ggplot()+
   theme_bw()+
   facet_grid(group ~ mixture+active, drop = TRUE)+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
-  labs( y = "Method", x = "Log10 BMD10")
+                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
+  labs( y = "Method", x = "Log10 BMC10")
 all_bmd
 
 
@@ -265,14 +267,15 @@ all_EC10<- ggplot()+
                 width=.1, size = 1, position=position_dodge(.9))+
   
   #measured
-  geom_point(data = subset(mix_model_coeff_edit2, active == "All Chemicals" | curve == "Active_Dose_uM"), aes(x = log10(EC50), y = model, group = active, color = model,), size = 2)+
-  geom_errorbar(data = subset(mix_model_coeff_edit2, active == "All Chemicals" | curve == "Active_Dose_uM"), aes(x = log10(EC50), y = model, xmin=log10(EC50_lower), xmax=log10(EC50_upper), group = active, 
+  geom_point(data = subset(mix_model_coeff_edit2, active == "All Chemicals" | adj == "Active_Dose_uM"), aes(x = log10(EC50), y = model, group = active, color = model,), size = 2)+
+  geom_errorbar(data = subset(mix_model_coeff_edit2, active == "All Chemicals" | adj == "Active_Dose_uM"), aes(x = log10(EC50), y = model, xmin=log10(EC50_lower), xmax=log10(EC50_upper), group = active, 
                                                                                                                  color = model), 
                 width=.1, size = 1, position=position_dodge(.9))+
   theme_bw()+
   facet_nested(group ~ mixture+active)+
   scale_color_manual(name = "Group",
-                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Log10 EC10")
 all_EC10
 
@@ -284,14 +287,15 @@ active_EC10<- ggplot()+
                 width=.1, size = 1, position=position_dodge(.9))+
   
   #measured
-  geom_point(data = subset(mix_model_coeff_edit, active == "Active Chemicals"), aes(x = log10(EC10), y = model, group = active, color = model,), size = 2)+
-  geom_errorbar(data = subset(mix_model_coeff_edit, active == "Active Chemicals"), aes(x = log10(EC10), y = model, xmin=log10(EC10_lower), xmax=log10(EC10_upper), group = active, 
+  geom_point(data = subset(mix_model_coeff_edit2, active == "Active Chemicals"), aes(x = log10(EC10), y = model, group = active, color = model,), size = 2)+
+  geom_errorbar(data = subset(mix_model_coeff_edit2, active == "Active Chemicals"), aes(x = log10(EC10), y = model, xmin=log10(EC10_lower), xmax=log10(EC10_upper), group = active, 
                                                                                        color = model), 
                 width=.1, size = 1, position=position_dodge(.9))+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"))+
+                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"), 
+                     labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Log10 EC10")
 active_EC10
 
@@ -305,6 +309,6 @@ combined_EC <- ggarrange(all_bmd, all_EC10, active_bmd, active_EC10,
                            legend = "bottom")
 combined_EC
 
-ggsave("combined_EC_BMC10.jpg", combined_EC,  height =10, width =10)
+ggsave("Figure4.jpg", combined_EC,  height =10, width =12)
 
 
