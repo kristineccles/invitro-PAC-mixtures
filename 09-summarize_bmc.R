@@ -203,6 +203,8 @@ mix_bmd_coeff_edit$active <- factor(mix_bmd_coeff_edit$active, levels = c("Activ
 mix_bmd_coeff_edit$id <- paste(mix_bmd_coeff_edit$mixture, mix_bmd_coeff_edit$model)
 ###########################################################################################################
 #### Plot ####
+model_bmd_coeff_edit$model[model_bmd_coeff_edit$model == "DA"] <- "CA"
+
 active_bmd<- ggplot()+
   #modeled
   geom_point(data = subset(model_bmd_coeff_edit, group == "% Contribution equals 100"), aes(x = log10(bmd_mean), y = model, group = model, color = model), size = 2)+
@@ -218,7 +220,7 @@ active_bmd<- ggplot()+
   theme_bw()+
   facet_grid(group ~ mixture+active, drop = TRUE)+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Log10 BMC10")
 active_bmd
@@ -240,7 +242,7 @@ all_bmd<- ggplot()+
   theme_bw()+
   facet_grid(group ~ mixture+active, drop = TRUE)+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Log10 BMC10")
 all_bmd
@@ -259,6 +261,9 @@ ggsave("combined_bmd10.jpg", combined_bmd,  height =12, width =5)
 
 #combined with EC10
 
+output_edit_all$model[output_edit_all$model == "DA"] <- "CA"
+output_edit$model[output_edit$model == "DA"] <- "CA"
+
 all_EC10<- ggplot()+
   #modeled
   geom_point(data = output_edit_all, aes(x = log10(EC10), y = model, group = id, color = model), size = 2)+
@@ -274,7 +279,7 @@ all_EC10<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active)+
   scale_color_manual(name = "Group",
-                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Log10 EC10")
 all_EC10
@@ -287,14 +292,14 @@ active_EC10<- ggplot()+
                 width=.1, size = 1, position=position_dodge(.9))+
   
   #measured
-  geom_point(data = subset(mix_model_coeff_edit2, active == "Active Chemicals"), aes(x = log10(EC10), y = model, group = active, color = model,), size = 2)+
+  geom_point(data = subset(mix_model_coeff_edit2, active == "Active Chemicals"), aes(x = log10(EC10), y = model, group = active, color = model), size = 2)+
   geom_errorbar(data = subset(mix_model_coeff_edit2, active == "Active Chemicals"), aes(x = log10(EC10), y = model, xmin=log10(EC10_lower), xmax=log10(EC10_upper), group = active, 
                                                                                        color = model), 
                 width=.1, size = 1, position=position_dodge(.9))+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c(DA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"), 
+                     values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"), 
                      labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Log10 EC10")
 active_EC10
