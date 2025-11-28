@@ -222,7 +222,7 @@ active_bmd<- ggplot()+
   scale_color_manual(name = "Group",
                      values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
-  labs( y = "Method", x = "Log10 BMC10")
+  labs( y = "Method", x = expression("Log"["10"] ~ " BMC10 (" * mu * "M)"))
 active_bmd
 
 mix_bmd_edit2 <- mix_bmd_coeff_edit[!grepl("Total_Dose_uM", mix_bmd_coeff_edit$adj), ]
@@ -244,7 +244,7 @@ all_bmd<- ggplot()+
   scale_color_manual(name = "Group",
                      values =  c(CA = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
-  labs( y = "Method", x = "Log10 BMC10")
+  labs( y = "Method", x = expression("Log"["10"] ~ " BMC10 (" * mu * "M)"))
 all_bmd
 
 
@@ -281,7 +281,7 @@ all_EC10<- ggplot()+
   scale_color_manual(name = "Group",
                      values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
-  labs( y = "Method", x = "Log10 EC10")
+  labs( y = "Method",x = expression("Log"["10"] ~ " EC10 (" * mu * "M)"))
 all_EC10
 
 active_EC10<- ggplot()+
@@ -301,7 +301,7 @@ active_EC10<- ggplot()+
   scale_color_manual(name = "Group",
                      values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"), 
                      labels = c("CA", "GCA", "IA", "Measured"))+
-  labs( y = "Method", x = "Log10 EC10")
+  labs( y = "Method", x = expression("Log"["10"] ~ " EC10 (" * mu * "M)"))
 active_EC10
 
 

@@ -7,7 +7,7 @@
 # Notes: need to run mixtures_modeling.R AND mixtures_dr.R
 # Order to run - 5
 #################################################
-
+library(ggh4x)
 #----------------------------------------------------------------------
 #---------- Compare Predicted vs Measured ---------
 #---------------------------------------------------------------------- 
@@ -155,7 +155,7 @@ compare_ED50 <- ggplot()+
   geom_ribbon(data=subset(IA_df, mix_ratio == "ED50"), aes(x=log10(x), y=mean, ymin=y_lower, ymax=y_upper), fill = "#2A788EFF",alpha=0.2) +
   
   theme_bw()+
-  facet_nested(category ~ mix_ratio+active )+
+  facet_nested(category ~ mix_ratio+active)+
   ylim(0, 100)+
   xlim(-5, 5)+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture")+

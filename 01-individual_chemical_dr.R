@@ -52,9 +52,9 @@ set.seed(2573)
 # fit for mixtures modeling
 individual_model<- drm(MaxResp~Dose_uM, data=df, curveid = Chemicalname,
                        type = "continuous",
-                       lowerl = c(-Inf, 0, 0),
-                       upperl = c(0, 100, Inf),
-                       fct=LL.4(fixed=c(NA, FIXED_C , NA, NA), 
+                       lowerl = c(-Inf, 0),
+                       upperl = c(0, Inf),
+                       fct=LL.4(fixed=c(NA, FIXED_C , 100, NA), 
                                 names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
 summary(individual_model)
 # Quick Plot of curve fits
@@ -63,7 +63,40 @@ plot(individual_model, col = TRUE)
 ED(individual_model, c(10))
 ED(individual_model, c(50))
 
-# get coefficients
+# for original fit
+keep_curves <- c(
+"Benz(j)aceanthrylene",
+"Benzo(a)pyrene",
+"Benzo(b)fluoranthene",
+"Benzo(k)fluoranthene",
+"Dibenz(a,h)anthracene",
+"Indeno(1,2,3-cd)pyrene")
+
+# subset actives only for visualization
+df_keep <- df[df$Chemicalname %in% keep_curves, ]
+
+# fit the model
+individual_model_keep <- drm(
+MaxResp ~ Dose_uM,
+data = df_keep,
+curveid = Chemicalname,
+type = "continuous",
+lowerl = c(-Inf, 0),
+upperl = c(0, Inf),
+fct = LL.4(fixed = c(NA, FIXED_C, 100, NA),
+names = c("Slope", "Lower Limit", "Upper Limit", "ED50")))
+
+#Plot
+plot(individual_model_keep, col = TRUE,    legendPos = c(0.1, 100),
+     xlim = c(0, max(df_keep$Dose_uM) * 1000), ylim = c(0, 100),
+     xlab = "Concentration (uM)",
+     ylab = "% Max MeBio Response")
+
+#Get EC values
+ED(individual_model_keep, c(10))
+ED(individual_model_keep, c(50))
+
+# get coefficients for model with free top
 individual_model_wCI <- tidy(individual_model, conf.int = TRUE)
 individual_model_wCI
 

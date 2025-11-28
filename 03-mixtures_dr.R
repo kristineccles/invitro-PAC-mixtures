@@ -83,7 +83,7 @@ plot(mix_model)
 mix_model_CI <- tidy(mix_model, conf.int = TRUE)
 #get EC10
 ED(mix_model, 10)
-write.csv(mix_model_CI[,1:6], "mix_model_CI.csv", row.names = FALSE)
+write.csv(mix_model_CI, "mix_model_CI.csv", row.names = FALSE)
 
 #reorganize
 mix_model_coeff <- mix_model_CI%>%
@@ -150,10 +150,22 @@ measured_mix_plot <- ggplot()+
   facet_grid(vars(mixture))+
   scale_fill_manual(values = c("#2A788EFF", "#7AD151FF"))+
   scale_color_manual(values = c("#2A788EFF", "#7AD151FF"))+
-  scale_linetype_manual(values = c("solid", "dashed"),labels = c("Active Concentration (uM)","Total Concentration (uM)" ))+
-  labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture",
-       linetype = "Concentration Calculation")+
-  ylim(0, 100)
+  scale_linetype_manual(
+    values = c("solid", "dashed"),
+    labels = c(
+      expression("Active Concentration (" * mu * "M)"),
+      expression("Total Concentration (" * mu * "M)")
+    )
+  ) +
+  labs(
+    y = "% Max MeBio Response",
+    x = expression("Log"["10"] ~ " Concentration (" * mu * "M)"),
+    color = "Mixture",
+    fill = "Mixture",
+    linetype = "Concentration Calculation"
+  ) +
+  ylim(0, 100)+
+  xlim(-5,2)
 measured_mix_plot
 ggsave("measured_mix_plot.jpg",measured_mix_plot,  height = 6, width = 5)
 
@@ -186,7 +198,7 @@ measured_mix_ED50<- ggplot(data = mix_model_coeff_wCI2, aes(x = log10(ED50), y =
   theme_bw()+
   labs(color ="Mixture")+
   ylab("Mixture")+
-  xlab("Log 10 EC50 (uM)")
+  xlab(expression("Log"["10"] ~ " EC50 (" * mu * "M)"))
 measured_mix_ED50
 
 measured_mix_top<- ggplot(data = mix_model_coeff_wCI2, aes(x = (`Upper Limit`), y = group))+

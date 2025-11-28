@@ -187,7 +187,7 @@ active_slope<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Slope")
 active_slope
@@ -207,7 +207,7 @@ active_top<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Top (%)")
 active_top
@@ -227,9 +227,9 @@ active_EC50<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
-  labs( y = "Method", x = "Log10 EC50")
+  labs( y = "Method", x = expression("Log"["10"] ~ " EC50 (" * mu * "M)"))
 active_EC50
 
 combined_CI_active <- ggarrange(active_slope, active_top, active_EC50,
@@ -263,7 +263,7 @@ all_slope<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active)+
   scale_color_manual(name = "Group",
-                     values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Slope")
 all_slope
@@ -283,7 +283,7 @@ all_top<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active)+
   scale_color_manual(name = "Group",
-                     values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
   labs( y = "Method", x = "Top (%)")
 all_top
@@ -303,9 +303,9 @@ all_EC50<- ggplot()+
   theme_bw()+
   facet_nested(group ~ mixture+active )+
   scale_color_manual(name = "Group",
-                     values =  c("CA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
+                     values =  c("DA" = "#FDE725FF", "GCA" = "#7AD151FF", "IA" = "#2A788EFF", "Measured" = "#5A5A5A"),
                      labels = c("CA", "GCA", "IA", "Measured"))+
-  labs( y = "Method", x = "Log10 EC50")
+  labs( y = "Method", x = expression("Log"["10"] ~ " EC50 (" * mu * "M)"))
 all_EC50
 
 

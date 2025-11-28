@@ -230,7 +230,7 @@ compare_ED10_100 <- ggplot()+
   
   geom_line(data = subset(invitro_predict_df), aes(x= log10(x), y = Prediction, color = "Measured in Vitro"), linewidth = 1)+
   geom_ribbon(data=subset(invitro_predict_df), aes(x=log10(x), y=Prediction, ymin=Lower, ymax=Upper), fill = "#5A5A5A", alpha=0.2) +
-  xlim(c(-5, 2.5))+
+  xlim(c(-5, 5))+
   ylim(c(0,100))+
   theme_bw()+
   labs(y="% Max MeBio Response", x= "Log10 Concentration (uM)", color = "Mixture", fill = "Mixture")+

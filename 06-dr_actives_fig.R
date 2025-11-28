@@ -79,15 +79,28 @@ summary_df <- response_data%>%
             upper = quantile(y, 0.975, na.rm =TRUE))%>%
   as.data.frame()
 
+#edit labsl
+chem_labels <- c(
+  "Benz(j)aceanthrylene"     = "Benz[j]aceanthrylene",
+  "Dibenz(a,h)anthracene"    = "Dibenz[a,h]anthracene",
+  "Benzo(a)pyrene"     = "Benzo[a]pyrene",
+  "Benzo(b)fluoranthene"     = "Benzo[b]fluoranthene",
+  "Indeno(1,2,3-cd)pyrene"  = "Indeno[1,2,3-cd]pyrene",
+  "Benzo(k)fluoranthene"     = "Benzo[k]fluoranthene"
+)
+
 # Plot the dose response curves
 individ_chems <- ggplot() +
-  geom_line(data = summary_df, aes(x= log10(x), y = mean, color = Chemical), linewidth = 1)+
-  geom_ribbon(data= summary_df, aes(x=log10(x), y= mean, ymin=lower, ymax=upper, fill = Chemical), alpha=0.2) +
-  scale_color_viridis(discrete= TRUE)+
-  scale_fill_viridis(discrete= TRUE)+
-  labs(x="Log10 Dose (uM)", y="% Max MeBio Response")+
-  theme_minimal()+
-  theme(legend.position="right")
+  geom_line(data = summary_df, aes(x = log10(x), y = mean, color = Chemical), linewidth = 1) +
+  geom_ribbon(data = summary_df, aes(x = log10(x), y = mean, ymin = lower, ymax = upper, fill = Chemical), alpha = 0.2) +
+  scale_color_viridis(discrete = TRUE,
+                      breaks = names(chem_labels),
+                      labels = unname(chem_labels)) +
+  scale_fill_viridis(discrete = TRUE,
+                     breaks = names(chem_labels),
+                     labels = unname(chem_labels)) +
+  labs(x = expression("Log"["10"] ~ " Dose (" * mu * "M)"), y = "% Max MeBio Response") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
 individ_chems
-
 ggsave(individ_chems, file="individual_curve_dr.jpg", height = 5, width = 5)
